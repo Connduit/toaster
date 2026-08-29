@@ -1,141 +1,221 @@
 #include <rtl-sdr.h>
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <cstdint>
+#include <csignal>
 #include <fstream>
 #include <iostream>
-#include <vector>
 
-constexpr uint32_t CENTER_FREQ = 94'000'000;
-constexpr uint32_t SAMPLE_RATE = 2'400'000;
-constexpr uint32_t AUDIO_RATE  = 48'000;
-constexpr int GAIN = 300; // 30.0 dB
+constexpr uint32_t CENTER_FREQ = 99'900'000;
+constexpr uint32_t SAMPLE_RATE = 2'400'000; // samples/second
+constexpr uint32_t AUDIO_RATE = 48'000; // final audio samples/second (this is a standard audio sample rate)
 
-constexpr size_t BUFFER_SIZE = 16 * 16384;
+constexpr int GAIN = 300; // tuner gain
+constexpr size_t BUFFER_SIZE = 16 * 16384; // how large each chunk of sdr data is
 
+// 2.4 MHz / 48 kHz
+constexpr int DECIMATION = SAMPLE_RATE / AUDIO_RATE; // decimation == down sampling
+
+// NOTE: each iq sample is 2 bytes
+
+rtlsdr_dev_t* device = nullptr;
 std::ofstream wav;
-std::complex<float> previous{1.0f, 0.0f};
 
 uint32_t audio_samples = 0;
 
-// Write a little-endian 16-bit integer
-void write_u16(std::ofstream& f, uint16_t value)
+std::complex<float> previous(1.0f, 0.0f);
+
+// -----------------------------------------------------------------------------
+// WAV helpers
+// -----------------------------------------------------------------------------
+
+void write_u16(uint16_t value)
 {
-    f.put(value & 0xff);
-    f.put((value >> 8) & 0xff);
+    wav.put(value & 0xff);
+    wav.put((value >> 8) & 0xff);
 }
 
-// Write a little-endian 32-bit integer
-void write_u32(std::ofstream& f, uint32_t value)
+void write_u32(uint32_t value)
 {
-    f.put(value & 0xff);
-    f.put((value >> 8) & 0xff);
-    f.put((value >> 16) & 0xff);
-    f.put((value >> 24) & 0xff);
+    wav.put(value & 0xff);
+    wav.put((value >> 8) & 0xff);
+    wav.put((value >> 16) & 0xff);
+    wav.put((value >> 24) & 0xff);
 }
 
 void write_wav_header()
 {
     wav.write("RIFF", 4);
-    write_u32(wav, 0);              // File size - filled in later
-    wav.write("WAVE", 4);
+    write_u32(0); // file size is unknown, we leave blank for now
 
-    wav.write("fmt ", 4);
-    write_u32(wav, 16);             // PCM header size
-    write_u16(wav, 1);              // PCM
-    write_u16(wav, 1);              // Mono
-    write_u32(wav, AUDIO_RATE);
-    write_u32(wav, AUDIO_RATE * 2); // Byte rate
-    write_u16(wav, 2);              // Block align
-    write_u16(wav, 16);             // Bits/sample
+    wav.write("WAVE", 4); // contains wave audio
 
-    wav.write("data", 4);
-    write_u32(wav, 0);              // Data size - filled in later
+    wav.write("fmt ", 4); // starts format section
+    write_u32(16);			// PCM format information is 16bytes long
+    write_u16(1);                    // PCM
+    write_u16(1);                    // mono (channel)
+    write_u32(AUDIO_RATE);		// this is the sample rate
+    write_u32(AUDIO_RATE * 2);  // this is the byte rate
+    write_u16(2);				// each sample occupies 2 bytes
+    write_u16(16);				// this says 16bits per sample
+
+    wav.write("data", 4);		// starts audio section
+    write_u32(0);				// data size is unknown, we leave blank for now
 }
 
+// once we stop recording, we use this function to update size of the audio
 void fix_wav_header()
 {
     uint32_t data_size = audio_samples * 2;
-    uint32_t file_size = 36 + data_size;
+    uint32_t file_size = 36 + data_size; // calculate the file size
 
-    wav.seekp(4);
-    write_u32(wav, file_size);
+    wav.seekp(4); // move to the correct position in the file to write to in order to update file size
+    write_u32(file_size);
 
-    wav.seekp(40);
-    write_u32(wav, data_size);
+    wav.seekp(40); // move to correct position in the file to write to in order to update data size
+    write_u32(data_size);
 }
 
-void callback(
-    unsigned char* buffer,
-    uint32_t length,
-    void*)
+// -----------------------------------------------------------------------------
+// Simple one-pole low-pass filter
+// -----------------------------------------------------------------------------
+
+class LowPass
 {
-    /*
-     * RTL-SDR format:
-     *
-     * buffer[0] = I
-     * buffer[1] = Q
-     * buffer[2] = I
-     * buffer[3] = Q
-     * ...
-     */
+public:
 
-    static float decimation_counter = 0;
+    LowPass(float cutoff, float sample_rate)
+    {
+        float rc = 1.0f / (2.0f * M_PI * cutoff); // filter's rc time constant
+        float dt = 1.0f / sample_rate; // time between samples 
 
+        alpha = dt / (rc + dt); // filter's coffeicent 
+    }
+
+	// takes in sample, and returns filtered version of sample 
+    float process(float input)
+    {
+        state += alpha * (input - state);
+        return state;
+    }
+
+private:
+
+    float alpha = 0; // stores filtered coeffiecnt 
+    float state = 0; // stores filter's previous output
+};
+
+// TODO: should eventually make FIR (finite impulse response) filter instead of single pole filter?
+// Channel filter
+LowPass channel_filter(200'000.0f, SAMPLE_RATE);
+
+// Audio filter
+LowPass audio_filter(15'000.0f, SAMPLE_RATE);
+
+// -----------------------------------------------------------------------------
+// RTL-SDR callback
+// -----------------------------------------------------------------------------
+
+void callback(
+    unsigned char* buffer, // pointer to raw sdr data
+    uint32_t length, // number of bytes in the buffer
+    void*) // optional user defined pointer (not using it at the moment)
+{
+    static int decimation_counter = 0; // this is needed cuz we want to downsample. we really only need 50 input samples per 1 output sample
+
+	// loop though raw bytes 2 at a time (one for I and one for Q)
     for (uint32_t n = 0; n < length; n += 2)
     {
-        float i = (buffer[n]     - 127.5f) / 127.5f;
-        float q = (buffer[n + 1] - 127.5f) / 127.5f;
+        float i =
+            (static_cast<float>(buffer[n]) - 127.5f) / 127.5f; // convert 8bit value into float
 
-        std::complex<float> current(i, q);
+        float q =
+            (static_cast<float>(buffer[n + 1]) - 127.5f) / 127.5f; // convert 8bit value into float
+
+        std::complex<float> current(i, q); // combine i and q values into a single (complex) value 
+
+        /*
+         * Channel filtering.
+         *
+         * This removes a lot of the RF outside
+         * the FM station.
+         */
+		// TODO: make a class/struct for IQ?
+		// filter the iq sample
+        current = std::complex<float>(
+            channel_filter.process(current.real()),
+            channel_filter.process(current.imag())
+        );
 
         /*
          * FM discriminator.
          *
-         * The phase difference between consecutive
-         * complex samples is proportional to
-         * instantaneous frequency.
+         * Phase difference between consecutive
+         * samples gives instantaneous frequency.
          */
+		// calculate relative phase between the two samples, and store it as an angle. 
+		// this gives us an approximation of the instantaneous frequency deviation
         float audio =
-            std::arg(current * std::conj(previous));
+            std::arg(current * std::conj(previous)); 
 
-        previous = current;
+        previous = current; // save off current sample
 
         /*
-         * Very crude decimation:
+         * Audio filtering.
+         */
+        audio = audio_filter.process(audio);
+
+        /*
+         * Downsample:
          *
-         * 2.4 MHz / 48 kHz = 50
-         *
-         * So keep approximately one sample out
-         * of every 50.
-         *
-         * NOTE: A real receiver should low-pass
-         * filter before decimation.
+         * 2.4 MHz → 48 kHz
          */
         decimation_counter++;
 
-        if (decimation_counter >= 50)
+		// once we've processed 50 samples (DECIMATION), we've produced one output audio sample
+        if (decimation_counter >= DECIMATION) 
         {
-            decimation_counter -= 50;
+			// reset counter
+            decimation_counter = 0;
 
-            // Scale to 16-bit PCM
-            float scaled = audio * 10000.0f;
+			// multiply by 20k so audio fits into range of 16bit pcm audio
+            float scaled = audio * 20'000.0f;
+            //float scaled = audio * 10'000.0f;
 
-            if (scaled > 32767)
-                scaled = 32767;
+			// prevents audio from going out their allowed range (-32768, 32767)
+            scaled = std::clamp(
+                scaled,
+                -32768.0f,
+                32767.0f
+            );
 
-            if (scaled < -32768)
-                scaled = -32768;
+			// convert floating point audio into 16bit int (which is the .wav format)
+            int16_t pcm =
+                static_cast<int16_t>(scaled);
 
-            int16_t pcm = static_cast<int16_t>(scaled);
-
-            write_u16(wav, static_cast<uint16_t>(pcm));
+			// write sample to file
+            write_u16(static_cast<uint16_t>(pcm));
 
             audio_samples++;
         }
     }
 }
+
+// -----------------------------------------------------------------------------
+// Ctrl+C
+// -----------------------------------------------------------------------------
+
+void signal_handler(int)
+{
+    if (device)
+        rtlsdr_cancel_async(device);
+}
+
+// -----------------------------------------------------------------------------
+// Main
+// -----------------------------------------------------------------------------
 
 int main()
 {
@@ -145,44 +225,38 @@ int main()
         return 1;
     }
 
-    rtlsdr_dev_t* device = nullptr;
-
     if (rtlsdr_open(&device, 0) != 0)
     {
         std::cerr << "Failed to open RTL-SDR\n";
         return 1;
     }
 
-    std::cout << "Configuring RTL-SDR...\n";
+    std::cout << "Opening RTL-SDR...\n";
 
-    rtlsdr_set_center_freq(device, CENTER_FREQ);
-    rtlsdr_set_sample_rate(device, SAMPLE_RATE);
+    rtlsdr_set_center_freq(device, CENTER_FREQ); // tune to center freq
+    rtlsdr_set_sample_rate(device, SAMPLE_RATE); // set sample rate
 
-    rtlsdr_set_tuner_gain_mode(device, 1);
-    rtlsdr_set_tuner_gain(device, GAIN);
+    //rtlsdr_set_tuner_gain_mode(device, 1); // set tuner gain to manual mode
+    //rtlsdr_set_tuner_gain(device, GAIN); // set tuner gain (manual mode most be enabled)
 
-    rtlsdr_reset_buffer(device);
+    rtlsdr_reset_buffer(device); // clear any old samples in the SDR's buffer
 
-    wav.open("output.wav", std::ios::binary);
+    wav.open("output.wav", std::ios::binary); // create file
 
     if (!wav)
     {
-        std::cerr << "Failed to create WAV file\n";
+        std::cerr << "Could not create output.wav\n";
         rtlsdr_close(device);
         return 1;
     }
 
     write_wav_header();
 
-    std::cout << "Receiving 94 MHz FM...\n";
+    std::signal(SIGINT, signal_handler);
+
+    std::cout << "Receiving 99.9 MHz...\n";
     std::cout << "Press Ctrl+C to stop.\n";
 
-    /*
-     * Start asynchronous IQ reception.
-     *
-     * The callback will continuously receive
-     * chunks of IQ data.
-     */
     rtlsdr_read_async(
         device,
         callback,
@@ -194,69 +268,11 @@ int main()
     fix_wav_header();
 
     wav.close();
+
     rtlsdr_close(device);
+    device = nullptr;
 
     std::cout << "Saved output.wav\n";
 
     return 0;
 }
-
-
-/*
-#include <rtl-sdr.h>
-
-#include <iostream>
-#include <csignal>
-
-
-
-rtlsdr_dev_t *device = nullptr;
-
-void handle_signal(int)
-{
-    rtlsdr_cancel_async(device);
-}
-
-void callback(unsigned char *buffer, uint32_t length, void *context)
-{
-	std::cout << "Received " << length << " bytes" << std::endl;
-}
-
-
-
-int main()
-{
-
-	int devCount = rtlsdr_get_device_count();
-	std::cout << "device count = " << devCount << std::endl;
-
-	int result = rtlsdr_open(&device, 0);
-
-	if (result != 0)
-	{
-		std::cout << "Failed to open device" << std::endl;
-	}
-
-
-	rtlsdr_set_center_freq(device, 94'000'000);
-	rtlsdr_set_sample_rate(device, 2'400'000);
-
-	// 30.0 dB of manual gain
-	rtlsdr_set_tuner_gain_mode(device, 1);
-	rtlsdr_set_tuner_gain(device, 300);
-
-	rtlsdr_reset_buffer(device);
-
-	std::cout << "Starting Receiver..." << std::endl;
-
-
-	rtlsdr_read_async(device, callback, nullptr, 0, 16 * 16384);
-
-
-	std::signal(SIGINT, handle_signal);
-	//rtlsdr_cancel_async(dev);
-	rtlsdr_close(device);
-
-	return 0;
-}
-*/
