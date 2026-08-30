@@ -2,6 +2,9 @@
 RF RX and TX
 - uses rtl-sdr (for now)
 
+https://deepwiki.com/osmocom/rtl-sdr/3-public-api-reference
+
+
 
                RTL-SDR
                   │

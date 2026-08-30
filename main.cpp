@@ -1,3 +1,5 @@
+#include "Toaster.h"
+
 #include <rtl-sdr.h>
 
 #include <algorithm>
@@ -82,11 +84,12 @@ void fix_wav_header()
 // Simple one-pole low-pass filter
 // -----------------------------------------------------------------------------
 
-class LowPass
+// filter that keeps freq content within roughly +- 200 kHz of the center freq
+class LPF
 {
 public:
 
-    LowPass(float cutoff, float sample_rate)
+    LPF(float cutoff, float sample_rate)
     {
         float rc = 1.0f / (2.0f * M_PI * cutoff); // filter's rc time constant
         float dt = 1.0f / sample_rate; // time between samples 
@@ -109,15 +112,17 @@ private:
 
 // TODO: should eventually make FIR (finite impulse response) filter instead of single pole filter?
 // Channel filter
-LowPass channel_filter(200'000.0f, SAMPLE_RATE);
+LPF channel_filter_i(80'000.0f, SAMPLE_RATE);
+LPF channel_filter_q(80'000.0f, SAMPLE_RATE);
 
 // Audio filter
-LowPass audio_filter(15'000.0f, SAMPLE_RATE);
+LPF audio_filter(15'000.0f, SAMPLE_RATE);
 
 // -----------------------------------------------------------------------------
 // RTL-SDR callback
 // -----------------------------------------------------------------------------
 
+//rtlsdr_read_async_cb_t callback(
 void callback(
     unsigned char* buffer, // pointer to raw sdr data
     uint32_t length, // number of bytes in the buffer
@@ -145,8 +150,8 @@ void callback(
 		// TODO: make a class/struct for IQ?
 		// filter the iq sample
         current = std::complex<float>(
-            channel_filter.process(current.real()),
-            channel_filter.process(current.imag())
+            channel_filter_i.process(current.real()),
+            channel_filter_q.process(current.imag())
         );
 
         /*
@@ -216,9 +221,29 @@ void signal_handler(int)
 // -----------------------------------------------------------------------------
 // Main
 // -----------------------------------------------------------------------------
-
+/* 
+TODO: Stages:
+Stage 1: DDC (Digital Down Converter) - filter out trash
+//Stage 2: Signal Conditioning
+	- DC Blocking Filter
+	- Automatic Gain Control (with feedback loop)
+//Stage 3: Synchronization
+	- Simple Carrier Frequency Offset (CFO) Correction
+Stage 4: Demodulation
+	- FM Demodulation (Phase Derivative)
+Stage 5: Post Processing
+	- De-emphasis Filter (Simple RC Lowpass)
+*/
 int main()
 {
+
+	Toaster toaster;
+	toaster.createToasterSubsystem();
+	toaster.startToasterSubsystem();
+	
+
+///////////////////////////////////
+
     if (rtlsdr_get_device_count() == 0)
     {
         std::cerr << "No RTL-SDR found\n";
@@ -276,3 +301,8 @@ int main()
 
     return 0;
 }
+
+
+/*
+typedef void(*rtlsdr_read_async_cb_t)(unsigned char *buf, uint32_t len, void *ctx);
+*/
