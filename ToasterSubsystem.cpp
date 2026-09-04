@@ -12,8 +12,9 @@
 // ============================================================
 
 ToasterSubsystem::ToasterSubsystem()
-    : running_(false)
-    , initialized_(false)
+    : 
+	running_(false), 
+	initialized_(false)
 {
     std::cout << "ToasterSubsystem created" << std::endl;
 }
@@ -63,9 +64,9 @@ void ToasterSubsystem::shutdown()
     // Save the WAV file if we have audio
     if (audio_sink_) {
         audio_sink_->finalize();
-        std::cout << "  ✅ Audio saved: " << output_filename_ << std::endl;
-        std::cout << "     Samples: " << audio_sink_->getSampleCount() << std::endl;
-        std::cout << "     Duration: " << audio_sink_->getDurationSeconds() << " seconds" << std::endl;
+        std::cout << "  Audio saved: " << output_filename_ << std::endl;
+        std::cout << "  Samples: " << audio_sink_->getSampleCount() << std::endl;
+        std::cout << "  Duration: " << audio_sink_->getDurationSeconds() << " seconds" << std::endl;
     }
     
     // Release components (smart pointers handle cleanup)
@@ -74,7 +75,7 @@ void ToasterSubsystem::shutdown()
     audio_sink_.reset();
     
     initialized_ = false;
-    std::cout << "✅ ToasterSubsystem shut down" << std::endl;
+    std::cout << "ToasterSubsystem shut down" << std::endl;
 }
 
 // ============================================================
@@ -84,9 +85,15 @@ void ToasterSubsystem::shutdown()
 bool ToasterSubsystem::start()
 {
     if (!initialized_) {
+		initialize();
         std::cerr << "❌ Not initialized! Call initialize() first." << std::endl;
-        return false;
+        //return false;
     }
+    /*
+	else
+	{
+		initialize();
+	}*/
     
     if (running_) {
         std::cout << "Already running" << std::endl;
@@ -124,6 +131,7 @@ bool ToasterSubsystem::start()
     std::cout << "   Press Ctrl+C to stop" << std::endl;
     std::cout << std::endl;
     
+    // 
     // ⚠️ THIS BLOCKS until stop() is called
     bool result = receiver_->receive();
     
@@ -253,7 +261,8 @@ void ToasterSubsystem::setupCallbacks()
         auto audio = processor_->process(iq_samples);
         
         // 2. Write the audio to the file
-        if (audio_sink_) {
+        if (audio_sink_) 
+        {
             audio_sink_->write(audio);
         }
         
@@ -269,7 +278,7 @@ void ToasterSubsystem::setupCallbacks()
         }
     });
     
-    std::cout << "  ✅ Callback set" << std::endl;
+    std::cout << "  Callback set" << std::endl;
 }
 
 // /*

@@ -239,9 +239,11 @@ int main()
 
 	Toaster toaster;
 	toaster.createToasterSubsystem();
+    // TODO: need to setfreq
 	toaster.startToasterSubsystem();
 	
-
+    std::cout << "done with main" << std::endl;
+    return 1;
 ///////////////////////////////////
 
     if (rtlsdr_get_device_count() == 0)

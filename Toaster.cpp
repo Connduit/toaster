@@ -12,9 +12,8 @@ Toaster::Toaster()
     : toasterSubsystem_(nullptr)
 {
     std::cout << "Toaster created" << std::endl;
-    instance_ = this;  // ✅ Set the global pointer
+    instance_ = this; 
     
-    // ✅ Setup signal handler
     std::signal(SIGINT, signalHandler);
 }
 

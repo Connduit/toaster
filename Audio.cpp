@@ -5,12 +5,16 @@
 AudioSink::AudioSink() = default;
 AudioSink::~AudioSink() { finalize(); }
 
-void AudioSink::write(const std::vector<float>& audio) {
+void AudioSink::write(const std::vector<float>& audio) 
+{
+    //std::cout << "AudioSink::write()" << std::endl;
+
     if (audio.empty()) return;
     
     sample_count_ += audio.size();
     
-    switch (format_) {
+    switch (format_) 
+    {
         case Format::WAV:
             writeWav(audio);
             break;
@@ -22,13 +26,18 @@ void AudioSink::write(const std::vector<float>& audio) {
     }
 }
 
-void AudioSink::writeWav(const std::vector<float>& audio) {
-    if (!file_.is_open()) {
+void AudioSink::writeWav(const std::vector<float>& audio) 
+{
+    std::cout << "writeWav" << std::endl;
+    if (!file_.is_open()) 
+    {
         file_.open(filename_, std::ios::binary);
-        if (!file_) {
+        if (!file_) 
+        {
             std::cerr << "Failed to open WAV file: " << filename_ << std::endl;
             return;
         }
+        std::cout << " header " << std::endl;
         // Write header later (when we know total size)
         // For now, just write a dummy header
         file_.write("RIFF", 4);
@@ -58,12 +67,14 @@ void AudioSink::writeWav(const std::vector<float>& audio) {
     }
     
     // Write audio data
-    for (float sample : audio) {
+    for (float sample : audio) 
+    {
         if (sample > 1.0f) sample = 1.0f;
         if (sample < -1.0f) sample = -1.0f;
         int16_t s = static_cast<int16_t>(sample * 32767.0f);
         file_.write(reinterpret_cast<const char*>(&s), 2);
     }
+    std::cout << " audio written " << std::endl;
 }
 
 void AudioSink::writeRaw(const std::vector<float>& audio) {

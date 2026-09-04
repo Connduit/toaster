@@ -230,7 +230,7 @@ bool Receiver::receive()
     // Set receiving flag
     is_receiving_ = true;
     
-    std::cout << "📡 Calling rtlsdr_read_async (will block until stopped)..." << std::endl;
+    std::cout << "   Calling rtlsdr_read_async (will block until stopped)..." << std::endl;
     std::cout << "   Buffer size: " << BUFFER_SIZE << " bytes" << std::endl;
     
     // ⚠️ THIS BLOCKS until rtlsdr_cancel_async() is called!
