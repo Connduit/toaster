@@ -84,9 +84,10 @@ void ToasterSubsystem::shutdown()
 
 bool ToasterSubsystem::start()
 {
-    if (!initialized_) {
+    if (!initialized_) 
+    {
 		initialize();
-        std::cerr << "❌ Not initialized! Call initialize() first." << std::endl;
+        //std::cerr << "❌ Not initialized! Call initialize() first." << std::endl;
         //return false;
     }
     /*

@@ -26,9 +26,10 @@ void AudioSink::write(const std::vector<float>& audio)
     }
 }
 
+// TODO: this entire func
 void AudioSink::writeWav(const std::vector<float>& audio) 
 {
-    std::cout << "writeWav" << std::endl;
+    //std::cout << "writeWav" << std::endl;
     if (!file_.is_open()) 
     {
         file_.open(filename_, std::ios::binary);
@@ -42,7 +43,7 @@ void AudioSink::writeWav(const std::vector<float>& audio)
         // For now, just write a dummy header
         file_.write("RIFF", 4);
         int32_t temp = 0;
-        file_.write(reinterpret_cast<const char*>(&temp), 4);
+        file_.write(reinterpret_cast<const char*>(&temp), 4); // TODO: incorrect?
         file_.write("WAVE", 4);
         file_.write("fmt ", 4);
         int32_t fmt_size = 16;
@@ -65,6 +66,10 @@ void AudioSink::writeWav(const std::vector<float>& audio)
         
         header_written_ = true;
     }
+    else
+    {
+        //std::cout << "file already opened" << std::endl;
+    }
     
     // Write audio data
     for (float sample : audio) 
@@ -74,7 +79,7 @@ void AudioSink::writeWav(const std::vector<float>& audio)
         int16_t s = static_cast<int16_t>(sample * 32767.0f);
         file_.write(reinterpret_cast<const char*>(&s), 2);
     }
-    std::cout << " audio written " << std::endl;
+    //std::cout << " audio written " << std::endl;
 }
 
 void AudioSink::writeRaw(const std::vector<float>& audio) {
