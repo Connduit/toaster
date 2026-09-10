@@ -7,9 +7,6 @@
 #include <chrono>
 #include <thread>
 
-// ============================================================
-// CONSTRUCTOR / DESTRUCTOR
-// ============================================================
 
 ToasterSubsystem::ToasterSubsystem()
     : 
@@ -19,15 +16,27 @@ ToasterSubsystem::ToasterSubsystem()
     std::cout << "ToasterSubsystem created" << std::endl;
 }
 
+ToasterSubsystem::ToasterSubsystem(
+    Config& config) : config_(config), running_(false), initialized_(false)
+{
+    std::cout << "ToasterSubsystem created" << std::endl;
+    // TODO: can i call these in the contructor or will that 
+    // mess with the async callback? 
+    // setupSubcomponents();
+    // setupMessaging();
+    // setupEvents();
+    // setupTasks();
+
+    // TODO: rtlsdr_read_async either needs an std::atomic<bool> callback flag or
+    // someone needs to explicitly call it after the contructor is done
+}
+
 ToasterSubsystem::~ToasterSubsystem()
 {
     std::cout << "ToasterSubsystem destroyed" << std::endl;
     shutdown();
 }
 
-// ============================================================
-// LIFECYCLE
-// ============================================================
 
 bool ToasterSubsystem::initialize()
 {
@@ -45,7 +54,7 @@ bool ToasterSubsystem::initialize()
     setupCallbacks();
     
     initialized_ = true;
-    std::cout << "✅ ToasterSubsystem initialized" << std::endl;
+    std::cout << "ToasterSubsystem initialized" << std::endl;
     
     return true;
 }
@@ -84,10 +93,9 @@ void ToasterSubsystem::shutdown()
 
 bool ToasterSubsystem::start()
 {
-    if (!initialized_) 
-    {
+    if (!initialized_) {
 		initialize();
-        //std::cerr << "❌ Not initialized! Call initialize() first." << std::endl;
+        std::cerr << "Not initialized! Call initialize() first." << std::endl;
         //return false;
     }
     /*
@@ -112,7 +120,7 @@ bool ToasterSubsystem::start()
     
     // Open the receiver
     if (!receiver_->openDevice(0)) {
-        std::cerr << "❌ Failed to open SDR device" << std::endl;
+        std::cerr << "Failed to open SDR device" << std::endl;
         return false;
     }
     
@@ -133,16 +141,16 @@ bool ToasterSubsystem::start()
     std::cout << std::endl;
     
     // 
-    // ⚠️ THIS BLOCKS until stop() is called
+    // THIS BLOCKS until stop() is called
     bool result = receiver_->receive();
     
     // We get here when stop() is called (via signal or manual)
     running_ = false;
     
     std::cout << std::endl;
-    std::cout << "📻 Receiver stopped" << std::endl;
-    std::cout << "   Total samples: " << (audio_sink_ ? audio_sink_->getSampleCount() : 0) << std::endl;
-    std::cout << "   Duration: " << (audio_sink_ ? audio_sink_->getDurationSeconds() : 0) << " seconds" << std::endl;
+    std::cout << "Receiver stopped" << std::endl;
+    std::cout << "Total samples: " << (audio_sink_ ? audio_sink_->getSampleCount() : 0) << std::endl;
+    std::cout << "Duration: " << (audio_sink_ ? audio_sink_->getDurationSeconds() : 0) << " seconds" << std::endl;
     
     return result;
 }
@@ -162,7 +170,7 @@ void ToasterSubsystem::stop()
     // Stop the receiver (this cancels rtlsdr_read_async)
     if (receiver_) {
         receiver_->stop();
-        std::cout << "  ✅ Receiver stopped" << std::endl;
+        std::cout << "Receiver stopped" << std::endl;
     }
 }
 
