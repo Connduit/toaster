@@ -1,15 +1,15 @@
 #include "Toaster.h"
 
-#include <iostream>
 
-#include "Toaster.h"
 #include <iostream>
 #include <csignal>
 
 Toaster* Toaster::instance_ = nullptr;
 
+//Toaster::Toaster() : config_() {}
 Toaster::Toaster()
     : toasterSubsystem_(nullptr)
+    : config_()
 {
     std::cout << "Toaster created" << std::endl;
     instance_ = this; 
@@ -20,15 +20,18 @@ Toaster::Toaster()
 Toaster::~Toaster()
 {
     std::cout << "Toaster destroyed" << std::endl;
-    delete toasterSubsystem_;
-    toasterSubsystem_ = nullptr;
-    instance_ = nullptr;
+    if (toasterSubsystem_)
+    {
+        delete toasterSubsystem_;
+        toasterSubsystem_ = nullptr;
+        instance_ = nullptr;
+    }
 }
 
 void Toaster::createToasterSubsystem()
 {
     std::cout << "Toaster::createToasterSubsystem()" << std::endl;
-    toasterSubsystem_ = new ToasterSubsystem();
+    toasterSubsystem_ = new ToasterSubsystem(config_);
 }
 
 void Toaster::startToasterSubsystem()
@@ -48,12 +51,14 @@ void Toaster::stopToasterSubsystem()
     }
 }
 
-// ✅ Static signal handler - calls stop on the instance
+// Static signal handler - calls stop on the instance
 void Toaster::signalHandler(int sig)
 {
-    if (sig == SIGINT) {
-        std::cout << "\n🛑 Ctrl+C received!" << std::endl;
-        if (instance_) {
+    if (sig == SIGINT) 
+    {
+        std::cout << "\nCtrl+C received!" << std::endl;
+        if (instance_) 
+        {
             instance_->stopToasterSubsystem();
         }
     }
