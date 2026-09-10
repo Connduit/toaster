@@ -1,6 +1,7 @@
 #ifndef TOASTER_SUBSYSTEM_H
 #define TOASTER_SUBSYSTEM_H
 
+#include "Config.h"
 #include "Audio.h"
 #include "DspProcessor.h"
 #include "Receiver.h"
@@ -32,11 +33,10 @@ class ToasterSubsystem
 {
 public:
     ToasterSubsystem();
+    ToasterSubsystem(Config& config);
     ~ToasterSubsystem();
     
-    // ============================================================
-    // LIFECYCLE
-    // ============================================================
+    // void run(); ??
     
     bool initialize();
     void shutdown();
