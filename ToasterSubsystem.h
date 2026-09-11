@@ -97,6 +97,8 @@ private:
     uint32_t sample_rate_ = 2400000;       // 2.4 Msps
     uint32_t audio_sample_rate_ = 48000;   // 48 kHz audio
     std::string output_filename_ = "output.wav";
+    Config config_; // TODO: change to Config& config_
+    //Config& config_;
 };
 
 // class ToasterSubsystem

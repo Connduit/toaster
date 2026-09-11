@@ -11,7 +11,8 @@
 ToasterSubsystem::ToasterSubsystem()
     : 
 	running_(false), 
-	initialized_(false)
+	initialized_(false),
+    config_()
 {
     std::cout << "ToasterSubsystem created" << std::endl;
 }

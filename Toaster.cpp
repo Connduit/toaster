@@ -8,8 +8,9 @@ Toaster* Toaster::instance_ = nullptr;
 
 //Toaster::Toaster() : config_() {}
 Toaster::Toaster()
-    : toasterSubsystem_(nullptr)
-    : config_()
+    : 
+    toasterSubsystem_(nullptr),
+    config_()
 {
     std::cout << "Toaster created" << std::endl;
     instance_ = this; 
