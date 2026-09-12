@@ -15,7 +15,7 @@ public:
     void stopToasterSubsystem();
 private:
     static void signalHandler(int sig); // Static signal handler
-    static Toaster *instance_;          // Static pointer to self
+    //static Toaster *instance_;          // Static pointer to self
     ToasterSubsystem *toasterSubsystem_;
     Config config_; // TODO:
 };

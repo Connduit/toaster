@@ -65,6 +65,8 @@ public:
     void setSampleRate(uint32_t sample_rate);
     void setOutputFile(const std::string& filename);
     void setAudioSampleRate(uint32_t audio_sample_rate);
+
+    static void signalHandler(int sig); // Static signal handler
     
 private:
     // ============================================================

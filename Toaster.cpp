@@ -4,16 +4,16 @@
 #include <iostream>
 #include <csignal>
 
-Toaster* Toaster::instance_ = nullptr;
+//Toaster* Toaster::instance_ = nullptr;
 
 //Toaster::Toaster() : config_() {}
 Toaster::Toaster()
     : 
-    toasterSubsystem_(nullptr),
+    //toasterSubsystem_(nullptr),
     config_()
 {
     std::cout << "Toaster created" << std::endl;
-    instance_ = this; 
+    //instance_ = this; 
     
     std::signal(SIGINT, signalHandler);
 }
@@ -25,7 +25,7 @@ Toaster::~Toaster()
     {
         delete toasterSubsystem_;
         toasterSubsystem_ = nullptr;
-        instance_ = nullptr;
+        //instance_ = nullptr;
     }
 }
 
@@ -53,17 +53,19 @@ void Toaster::stopToasterSubsystem()
 }
 
 // Static signal handler - calls stop on the instance
-void Toaster::signalHandler(int sig)
-{
-    if (sig == SIGINT) 
-    {
-        std::cout << "\nCtrl+C received!" << std::endl;
-        if (instance_) 
-        {
-            instance_->stopToasterSubsystem();
-        }
-    }
-}
+// void Toaster::signalHandler(int sig)
+// {
+//     if (sig == SIGINT) 
+//     {
+//         std::cout << "\nCtrl+C received!" << std::endl;
+//         toasterSubsystem_->stop();
+//         // if (instance_) 
+// 
+//         // {
+//         //     instance_->stopToasterSubsystem();
+//         // }
+//     }
+// }
 
 
 // void Toaster::loadConfig() {}

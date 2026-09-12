@@ -484,3 +484,18 @@ void ToasterSubsystem::setupCallbacks()
 // 	running_ = true;
 // 	receiver_->receive();
 // }
+
+// Static signal handler - calls stop on the instance
+void ToasterSubsystem::signalHandler(int sig)
+{
+    if (sig == SIGINT) 
+    {
+        std::cout << "\nCtrl+C received!" << std::endl;
+        this->stop();
+        // if (instance_) 
+
+        // {
+        //     instance_->stopToasterSubsystem();
+        // }
+    }
+}
