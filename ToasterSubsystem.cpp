@@ -3,6 +3,8 @@
 #include "Receiver.h"
 #include "DspProcessor.h"
 #include "Audio.h"
+#include "AudioSink.h"
+
 #include <iostream>
 #include <csignal>
 #include <chrono>
@@ -37,6 +39,17 @@ ToasterSubsystem::ToasterSubsystem(
 ToasterSubsystem::~ToasterSubsystem()
 {
     std::cout << "ToasterSubsystem::~ToasterSubsystem()" << std::endl;
+    stop();
+
+    delete dspProcessor_;
+    delete audio_;
+    delete audioSink_;
+    delete audioFilter_;
+    delete fmFilter_;
+    delete decimator_;
+    delete demodulator_;
+    delete dispatcher_;
+    delete receiver_;
 }
 
 
@@ -56,10 +69,17 @@ void ToasterSubsystem::setupMessaging()
     //receiver_ = new Receiver(config_.center_freq, config_.other_stuff, etc...);
     receiver_ = new Receiver();
     dispatcher_ = new Dispatcher();
+    demodulator_ = new Demodulator();
+    decimator_ = new Decimator(50);
     //audio_ = new AudioSink(config_.center_freq, config_.other_stuff, etc...);
-    audio_ = new AudioSink();
+    audioSink_ = new AudioSink();
+    audio_ = new Audio(audioSink_);
+    //fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
+    fmFilter_ = new Filter(2400000.0f, 150000.0f, 101);
+    audioFilter_ = new Filter(2400000.0f, 15000.0f, 101);
 
-    
+    //dspProcessor_ = new DspProcessor(fmFilter_, demodulator_, decimator_, audio_);
+    dspProcessor_ = new DspProcessor(demodulator_, decimator_, audio_);
 }
 
 
@@ -69,35 +89,63 @@ void ToasterSubsystem::setupEvents()
     
     // Create the receiver (does NOT call receive() in constructor!)
     //receiver_ = std::make_unique<Receiver>();
-    receiver_->setIQCallback([this](const IQData& iqData)
-    {
-        // std::cout << "ToasterSubsystem::setupEvents() - setIQCallback" << std::endl;
+    // receiver_->setIQCallback([this](const IQData& iqData)
+    // {
+    //     // std::cout << "ToasterSubsystem::setupEvents() - setIQCallback" << std::endl;
+    //     dispatcher_->dispatch(iqData);
+    // });
+
+    // // TODO: change type from 0... 0 is just a filler/default type for now
+    // dispatcher_->registerHandler(0, [this](const IQData& iqData)
+    // {
+    //     // TODO: should probably be processed by DspProcessor and then sent back here to be 
+    //     // dispatched again to something like audio or visualizer depending on the command/message type
+
+    //     //auto filteredIQ = fmFilter_->process(iqData);
+    //     //auto demodulated = demodulator_->process(filteredIQ);
+    //     //auto filteredAudio = audioFilter_->process(demodulated);
+    //     //auto audio = decimator_->process(filteredAudio);
+
+    //     auto filteredIQ = fmFilter_->process(iqData);
+    //     auto demodulated = demodulator_->process(filteredIQ);
+    //     auto audio = decimator_->process(demodulated);
+
+    //     // auto demodulated = demodulator_->process(iqData);
+    //     // auto filteredAudio = audioFilter_->process(demodulated);
+    //     // auto audio = decimator_->process(filteredAudio);
+
+    //     // auto demodulated = demodulator_->process(iqData);
+    //     // auto audio = decimator_->process(demodulated);
+    //     audio_->process(audio);
+    // });
+
+    receiver_->setIQCallback([this](const IQData &iqData)
+    { 
         dispatcher_->dispatch(iqData);
     });
 
-    // TODO: change type from 0... 0 is just a filler/default type for now
-    dispatcher_->registerHandler(0, [this](const IQData& iqData)
-    {
-        audio_->process(iqData);
+    dispatcher_->registerHandler(0, [this](const IQData &iqData)
+    { 
+        dspProcessor_->enqueue(iqData);
     });
 
-//////////////////////
-// 	// messageParser_ calls back to Dispatcher
-// 	messageHandler_->setOnMessage([&](const InternalMessage& msg)
-// 	{
-// 			std::cout << "dispatch_->setOnMessage" << std::endl;
-// 			dispatcher_->dispatch(msg);
-// 	});
+    //////////////////////
+    // 	// messageParser_ calls back to Dispatcher
+    // 	messageHandler_->setOnMessage([&](const InternalMessage& msg)
+    // 	{
+    // 			std::cout << "dispatch_->setOnMessage" << std::endl;
+    // 			dispatcher_->dispatch(msg);
+    // 	});
 
-// 	dispatcher_->registerHandler(MessageType::DEFAULT, [&](const InternalMessage& msg)
-// 	{
-// 		std::cout << "dispatch_->registerHandler(MessageType::DEFAULT)" << std::endl;
-// 		controller_->handleDefault(msg);
-// 	});
+    // 	dispatcher_->registerHandler(MessageType::DEFAULT, [&](const InternalMessage& msg)
+    // 	{
+    // 		std::cout << "dispatch_->registerHandler(MessageType::DEFAULT)" << std::endl;
+    // 		controller_->handleDefault(msg);
+    // 	});
 
-//////////////////////
+    //////////////////////
     // Create the DSP processor
-    //processor_ = std::make_unique<DspProcessor>(audio_sample_rate_);
+    // processor_ = std::make_unique<DspProcessor>(audio_sample_rate_);
     
     // Create the audio sink (saves to file)
     // audio_sink_ = std::make_unique<AudioSink>();
@@ -117,6 +165,7 @@ bool ToasterSubsystem::start()
 
     // TODO: wait for commands - implement this later
     // For now we will just automatically start receiving
+    dspProcessor_->start();
     receiver_->startAsync();
 
     // std::string command
@@ -135,6 +184,7 @@ bool ToasterSubsystem::start()
         }
         else if (input == "stop")
         {
+            stop();
             // status = ...
             break;
         }
@@ -149,7 +199,20 @@ bool ToasterSubsystem::start()
 
 void ToasterSubsystem::stop()
 {
-    std::cout << "ToasterSubsystem::stop()" << std::endl;
+    //std::cout << "ToasterSubsystem::stop()" << std::endl;
+    std::cout << "STOP: entering" << std::endl;
+
+    receiver_->stopAsync();
+
+    std::cout << "STOP: receiver stopped" << std::endl;
+
+    dspProcessor_->stop();
+
+    std::cout << "STOP: DSP stopped" << std::endl;
+
+    audioSink_->finalize();
+
+    std::cout << "STOP: audio finalized" << std::endl;
 }
 
 

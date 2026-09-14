@@ -23,10 +23,10 @@ Receiver::Receiver()
 
     // SDR configuration can go here.
     //
-    // rtlsdr_set_center_freq(device_, 95700000);
-    // rtlsdr_set_sample_rate(device_, 2400000);
-    // rtlsdr_set_tuner_gain_mode(device_, 1);
-    // rtlsdr_set_tuner_gain(device_, 300);
+    rtlsdr_set_center_freq(device_, 99900000);
+    rtlsdr_set_sample_rate(device_, 2400000);
+    //rtlsdr_set_tuner_gain_mode(device_, 1);
+    //rtlsdr_set_tuner_gain(device_, 300);
 }
 
 Receiver::~Receiver()
@@ -62,20 +62,45 @@ void Receiver::startAsync()
 
 void Receiver::stopAsync()
 {
+    std::cout << "Receiver::stopAsync(): entering" << std::endl;
+
     if (!receiving_)
     {
         return;
     }
 
+    receiving_ = false;
+
+    std::cout << "Receiver::stopAsync(): cancelling" << std::endl;
+
     rtlsdr_cancel_async(device_);
+
+    std::cout << "Receiver::stopAsync(): joining" << std::endl;
 
     if (receiveThread_.joinable())
     {
         receiveThread_.join();
     }
 
-    receiving_ = false;
+    std::cout << "Receiver::stopAsync(): finished" << std::endl;
 }
+
+//void Receiver::stopAsync()
+//{
+//    if (!receiving_)
+//    {
+//        return;
+//    }
+//
+//    rtlsdr_cancel_async(device_);
+//
+//    if (receiveThread_.joinable())
+//    {
+//        receiveThread_.join();
+//    }
+//
+//    receiving_ = false;
+//}
 
 bool Receiver::isReceiving() const
 {
@@ -84,9 +109,13 @@ bool Receiver::isReceiving() const
 
 void Receiver::receive()
 {
+    auto start = std::chrono::steady_clock::now();
     std::cout << "Receiver::receive()" << std::endl;
 
+
     int result = rtlsdr_reset_buffer(device_);
+
+    std::cout << "Calling rtlsdr_read_async()" << std::endl;
 
     result = rtlsdr_read_async(
         device_,
@@ -96,27 +125,50 @@ void Receiver::receive()
         0
     );
 
-    std::cout << "rtlsdr_read_async() returned: " << result << std::endl;
+    std::cout << "rtlsdr_read_async() RETURNED: "
+              << result
+              << std::endl;
 
     receiving_ = false;
+    auto end = std::chrono::steady_clock::now();
+
+const double elapsed =
+    std::chrono::duration<double>(end - start).count();
+
+std::cout
+    << "Receiver elapsed time: "
+    << elapsed
+    << " seconds"
+    << std::endl;
 }
 
-void Receiver::rtlsdrCallback(
-    unsigned char* buffer,
-    uint32_t length,
-    void* context
-)
+//void Receiver::receive()
+//{
+//    std::cout << "Receiver::receive()" << std::endl;
+//
+//    int result = rtlsdr_reset_buffer(device_);
+//
+//    result = rtlsdr_read_async(device_, &Receiver::rtlsdrCallback, this, 0, 0);
+//
+//    std::cout << "rtlsdr_read_async() returned: " << result << std::endl;
+//
+//    receiving_ = false;
+//}
+
+void Receiver::rtlsdrCallback(unsigned char* buffer, uint32_t length, void* context)
 {
     //std::cout << "Receiver::rtlsdrCallback()" << std::endl;
-    auto* receiver = static_cast<Receiver*>(context);
+    auto *receiver = static_cast<Receiver *>(context);
+
+    if (!receiver->receiving_)
+    {
+        return;
+    }
 
     receiver->processRawData(buffer, length);
 }
 
-void Receiver::processRawData(
-    unsigned char* buffer,
-    uint32_t length
-)
+void Receiver::processRawData(unsigned char* buffer, uint32_t length)
 {
     //std::cout << "Receiver::processRawData()" << std::endl;
     IQData iqData;

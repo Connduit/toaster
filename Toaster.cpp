@@ -38,7 +38,8 @@ void Toaster::startToasterSubsystem()
 void Toaster::stopToasterSubsystem()
 {
     std::cout << "Toaster::stopToasterSubsystem()" << std::endl;
-    if (toasterSubsystem_) {
+    if (toasterSubsystem_) 
+    {
         toasterSubsystem_->stop();
     }
 }

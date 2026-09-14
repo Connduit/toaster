@@ -2,12 +2,6 @@
 
 #include <rtl-sdr.h>
 
-#include <algorithm>
-#include <cmath>
-#include <complex>
-#include <cstdint>
-#include <csignal>
-#include <fstream>
 #include <iostream>
 
 

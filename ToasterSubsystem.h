@@ -6,6 +6,8 @@
 #include "DspProcessor.h"
 #include "Receiver.h"
 #include "Dispatcher.h"
+#include "Demodulator.h"
+#include "Decimator.h"
 #include "Filter.h"
 
 #include <memory>
@@ -53,7 +55,13 @@ private:
     
     Receiver* receiver_;
     Dispatcher* dispatcher_;
-    AudioSink* audio_; // TODO: rename to audioSink_? 
+    Demodulator* demodulator_;
+    Decimator* decimator_;
+    AudioSink* audioSink_; 
+    Audio* audio_;
+    Filter* fmFilter_;
+    Filter* audioFilter_;
+    DspProcessor* dspProcessor_;
     //std::unique_ptr<Receiver> receiver_;
     // std::unique_ptr<DspProcessor> processor_;
     // std::unique_ptr<AudioSink> audio_sink_;
