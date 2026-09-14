@@ -60,6 +60,7 @@ private:
     Demodulator* demodulator_;
     Decimator* decimator_;
     AudioSink* audioSink_; 
+    ChannelFilter* channelFilter_;
     Filter* iFilter_;
     Filter* qFilter_;
     Filter* audioFilter_;

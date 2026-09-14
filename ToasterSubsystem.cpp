@@ -90,11 +90,13 @@ void ToasterSubsystem::setupMessaging()
     //audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
     iFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
     qFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
+    channelFilter_ = new ChannelFilter(iFilter_, qFilter_);
     audioFilter_ = new IIRFilter(15'000.0f, 2'400'000.0f);
 
     //dspProcessor_ = new DspProcessor(fmFilter_, demodulator_, decimator_, audio_);
     //dspProcessor_ = new DspProcessor(demodulator_, decimator_, audio_);
-    dspProcessor_ = new DspProcessor(iFilter_, qFilter_, audioFilter_, demodulator_, decimator_, audio_);
+    //dspProcessor_ = new DspProcessor(iFilter_, qFilter_, audioFilter_, demodulator_, decimator_, audio_);
+    dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audio_);
 }
 
 

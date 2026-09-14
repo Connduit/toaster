@@ -3,6 +3,7 @@
 
 #include "ToasterTypes.h"
 #include "IIRFilter.h"
+#include "ChannelFilter.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -20,7 +21,7 @@ class DspProcessor
 public:
     //DspProcessor( Filter* fmFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
     //DspProcessor( Demodulator* demodulator, Decimator* decimator, Audio* audio);
-    DspProcessor(Filter* iFilter, Filter* qFilter, Filter* audioFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
+    DspProcessor(ChannelFilter* channelFilter, Filter* audioFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
 
     ~DspProcessor();
 
@@ -33,12 +34,10 @@ private:
     void processLoop();
     void process(const IQData& iqData);
 
-    Filter* channelFilterI_;
-    Filter* channelFilterQ_;
+    //Filter* channelFilterI_;
+    //Filter* channelFilterQ_;
+    ChannelFilter* channelFilter_; 
     Filter* audioFilter_;
-    //IIRFilter* channelFilterI_;
-    //IIRFilter* channelFilterQ_;
-    //IIRFilter* audioFilter_;
 
     Filter* fmFilter_;
     //Filter* audioFilter_;

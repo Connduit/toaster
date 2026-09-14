@@ -11,6 +11,8 @@ public:
 
     float process(float input);
 
+    AudioData process(const IQData& iqData);
+
 private:
     float alpha_;
     float state_;
