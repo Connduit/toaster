@@ -7,7 +7,7 @@ class Filter
 {
 public:
     virtual ~Filter() = default;
-    //virtual float process(float input) = 0;
+    virtual float process(float input) = 0;
 private:
 };
 

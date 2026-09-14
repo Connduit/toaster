@@ -19,7 +19,8 @@ class DspProcessor
 {
 public:
     //DspProcessor( Filter* fmFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
-    DspProcessor( Demodulator* demodulator, Decimator* decimator, Audio* audio);
+    //DspProcessor( Demodulator* demodulator, Decimator* decimator, Audio* audio);
+    DspProcessor(Filter* iFilter, Filter* qFilter, Filter* audioFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
 
     ~DspProcessor();
 
@@ -32,15 +33,20 @@ private:
     void processLoop();
     void process(const IQData& iqData);
 
+    Filter* channelFilterI_;
+    Filter* channelFilterQ_;
+    Filter* audioFilter_;
+    //IIRFilter* channelFilterI_;
+    //IIRFilter* channelFilterQ_;
+    //IIRFilter* audioFilter_;
+
     Filter* fmFilter_;
+    //Filter* audioFilter_;
     Demodulator* demodulator_;
     Decimator* decimator_;
     Audio* audio_;
 
 
-    IIRFilter channelFilterI_;
-    IIRFilter channelFilterQ_;
-    IIRFilter audioFilter_;
 
     std::queue<IQData> queue_;
 

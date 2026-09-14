@@ -44,12 +44,23 @@ ToasterSubsystem::~ToasterSubsystem()
     delete dspProcessor_;
     delete audio_;
     delete audioSink_;
-    delete audioFilter_;
-    delete fmFilter_;
+    //delete fmFilter_;
     delete decimator_;
     delete demodulator_;
     delete dispatcher_;
     delete receiver_;
+    if (iFilter_)
+    {
+        delete iFilter_;
+    }
+    if (qFilter_)
+    {
+        delete qFilter_;
+    }
+    if (audioFilter_)
+    {
+        delete audioFilter_;
+    }
 }
 
 
@@ -75,11 +86,15 @@ void ToasterSubsystem::setupMessaging()
     audioSink_ = new AudioSink();
     audio_ = new Audio(audioSink_);
     //fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
-    fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
-    audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
+    //fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
+    //audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
+    iFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
+    qFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
+    audioFilter_ = new IIRFilter(15'000.0f, 2'400'000.0f);
 
     //dspProcessor_ = new DspProcessor(fmFilter_, demodulator_, decimator_, audio_);
-    dspProcessor_ = new DspProcessor(demodulator_, decimator_, audio_);
+    //dspProcessor_ = new DspProcessor(demodulator_, decimator_, audio_);
+    dspProcessor_ = new DspProcessor(iFilter_, qFilter_, audioFilter_, demodulator_, decimator_, audio_);
 }
 
 

@@ -24,20 +24,39 @@
 //{
 //}
 
+
+// TODO: dsp should take a dictionary of filters? map<enum FilterType, Filter>
 DspProcessor::DspProcessor(
+    Filter* iFilter,
+    Filter* qFilter,
+    Filter* audioFilter,
     Demodulator* demodulator,
     Decimator* decimator,
-    Audio* audio
-)
-    : channelFilterI_(80'000.0f, 2'400'000.0f),
-      channelFilterQ_(80'000.0f, 2'400'000.0f),
-      audioFilter_(15'000.0f, 2'400'000.0f),
-      demodulator_(demodulator),
-      decimator_(decimator),
-      audio_(audio),
-      running_(false)
+    Audio* audio)
+    : 
+    channelFilterI_(iFilter),
+    channelFilterQ_(qFilter),
+    audioFilter_(audioFilter),
+    demodulator_(demodulator),
+    decimator_(decimator),
+    audio_(audio),
+    running_(false)
 {
 }
+// DspProcessor::DspProcessor(
+//     Demodulator* demodulator,
+//     Decimator* decimator,
+//     Audio* audio)
+//     : 
+//     channelFilterI_(80'000.0f, 2'400'000.0f),
+//     channelFilterQ_(80'000.0f, 2'400'000.0f),
+//     audioFilter_(15'000.0f, 2'400'000.0f),
+//     demodulator_(demodulator),
+//     decimator_(decimator),
+//     audio_(audio),
+//     running_(false)
+// {
+// }
 
 DspProcessor::~DspProcessor()
 {
@@ -144,16 +163,10 @@ void DspProcessor::process(const IQData& iqData)
         // Channel filter
         // -------------------------
 
-        const float filteredI =
-            channelFilterI_.process(sample.real());
+        const float filteredI = channelFilterI_->process(sample.real());
+        const float filteredQ = channelFilterQ_->process(sample.imag());
 
-        const float filteredQ =
-            channelFilterQ_.process(sample.imag());
-
-        const std::complex<float> filteredIQ(
-            filteredI,
-            filteredQ
-        );
+        const std::complex<float> filteredIQ(filteredI, filteredQ);
 
         // -------------------------
         // FM demodulation
@@ -166,8 +179,7 @@ void DspProcessor::process(const IQData& iqData)
         // Audio filter
         // -------------------------
 
-        const float filteredAudio =
-            audioFilter_.process(demodulated);
+        const float filteredAudio = audioFilter_->process(demodulated);
 
         // -------------------------
         // Decimation
@@ -175,9 +187,7 @@ void DspProcessor::process(const IQData& iqData)
 
         float decimatedSample;
 
-        if (decimator_->processSample(
-                filteredAudio,
-                decimatedSample))
+        if (decimator_->processSample(filteredAudio, decimatedSample))
         {
             audio.push_back(decimatedSample);
         }
@@ -186,5 +196,7 @@ void DspProcessor::process(const IQData& iqData)
     // Send the entire resulting audio buffer
     // to Audio at once.
     if (!audio.empty())
+    {
         audio_->process(audio);
+    }
 }

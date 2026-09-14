@@ -1,8 +1,10 @@
 #include "IIRFilter.h" 
 
+
 IIRFilter::IIRFilter(float cutoffFrequency, float sampleRate)
-    : alpha_(0.0f),
-      state_(0.0f)
+    : 
+    alpha_(0.0f),
+    state_(0.0f)
 {
     const float rc =
         1.0f / (2.0f * static_cast<float>(M_PI) * cutoffFrequency);

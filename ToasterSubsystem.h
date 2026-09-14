@@ -60,9 +60,12 @@ private:
     Demodulator* demodulator_;
     Decimator* decimator_;
     AudioSink* audioSink_; 
-    Audio* audio_;
-    Filter* fmFilter_;
+    Filter* iFilter_;
+    Filter* qFilter_;
     Filter* audioFilter_;
+    //Filter* fmFilter_;
+    //Filter* audioFilter_;
+    Audio* audio_;
     DspProcessor* dspProcessor_;
     //std::unique_ptr<Receiver> receiver_;
     // std::unique_ptr<DspProcessor> processor_;
