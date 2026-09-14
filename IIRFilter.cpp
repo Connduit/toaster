@@ -1,8 +1,6 @@
-#include "LPF.h"
+#include "IIRFilter.h" 
 
-#include <cmath>
-
-LPF::LPF(float cutoffFrequency, float sampleRate)
+IIRFilter::IIRFilter(float cutoffFrequency, float sampleRate)
     : alpha_(0.0f),
       state_(0.0f)
 {
@@ -16,7 +14,7 @@ LPF::LPF(float cutoffFrequency, float sampleRate)
         dt / (rc + dt);
 }
 
-float LPF::process(float input)
+float IIRFilter::process(float input)
 {
     state_ += alpha_ * (input - state_);
 

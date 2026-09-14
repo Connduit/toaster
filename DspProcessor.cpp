@@ -87,6 +87,8 @@ void DspProcessor::enqueue(const IQData& iqData)
     condition_.notify_one();
 }
 
+// TODO: resource manager / queue logic should be its own class
+// when it gets more complex?
 void DspProcessor::processLoop()
 {
     std::cout << "DspProcessor::processLoop() started" << std::endl;

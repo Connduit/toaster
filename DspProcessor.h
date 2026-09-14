@@ -2,7 +2,8 @@
 #define TOASTER_DSP_H
 
 #include "ToasterTypes.h"
-#include "LPF.h"
+//#include "LPF.h"
+#include "IIRFilter.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -38,9 +39,12 @@ private:
     Audio* audio_;
 
 
-    LPF channelFilterI_;
-    LPF channelFilterQ_;
-    LPF audioFilter_;
+    IIRFilter channelFilterI_;
+    IIRFilter channelFilterQ_;
+    IIRFilter audioFilter_;
+    //LPF channelFilterI_;
+    //LPF channelFilterQ_;
+    //LPF audioFilter_;
 
 
     std::queue<IQData> queue_;

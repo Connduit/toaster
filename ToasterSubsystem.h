@@ -8,7 +8,9 @@
 #include "Dispatcher.h"
 #include "Demodulator.h"
 #include "Decimator.h"
-#include "Filter.h"
+//#include "Filter.h"
+#include "FIRFilter.h"
+#include "IIRFilter.h"
 
 #include <memory>
 #include <atomic>

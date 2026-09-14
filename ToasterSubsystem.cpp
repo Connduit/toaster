@@ -75,8 +75,8 @@ void ToasterSubsystem::setupMessaging()
     audioSink_ = new AudioSink();
     audio_ = new Audio(audioSink_);
     //fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
-    fmFilter_ = new Filter(2400000.0f, 150000.0f, 101);
-    audioFilter_ = new Filter(2400000.0f, 15000.0f, 101);
+    fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
+    audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
 
     //dspProcessor_ = new DspProcessor(fmFilter_, demodulator_, decimator_, audio_);
     dspProcessor_ = new DspProcessor(demodulator_, decimator_, audio_);
