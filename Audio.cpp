@@ -5,6 +5,12 @@
 AudioSink::AudioSink() = default;
 AudioSink::~AudioSink() { finalize(); }
 
+// TODO: 
+void AudioSink::process(const IQData& iqData)
+{
+    // std::cout << "AudioSink::process()" << std::endl;
+}
+
 void AudioSink::write(const std::vector<float>& audio) 
 {
     //std::cout << "AudioSink::write()" << std::endl;

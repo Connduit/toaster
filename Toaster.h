@@ -14,9 +14,8 @@ public:
     void startToasterSubsystem();
     void stopToasterSubsystem();
 private:
-    static void signalHandler(int sig); // Static signal handler
-    //static Toaster *instance_;          // Static pointer to self
-    ToasterSubsystem *toasterSubsystem_;
+    //std::unique_ptr<ToasterSubsystem> toasterSubsystem_;
+    ToasterSubsystem* toasterSubsystem_;
     Config config_; // TODO:
 };
 

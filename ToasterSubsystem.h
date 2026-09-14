@@ -5,6 +5,7 @@
 #include "Audio.h"
 #include "DspProcessor.h"
 #include "Receiver.h"
+#include "Dispatcher.h"
 #include "Filter.h"
 
 #include <memory>
@@ -36,69 +37,33 @@ public:
     ToasterSubsystem(Config& config);
     ~ToasterSubsystem();
     
-    // void run(); ??
-    
-    bool initialize();
-    void shutdown();
-    
-    // ============================================================
-    // CONTROL
-    // ============================================================
-    
     bool start();   // BLOCKS until stop() is called (via signal or manual)
     void stop();    // Stops the receiver and unblocks start()
     
-    // ============================================================
-    // STATUS
-    // ============================================================
-    
-    bool isRunning() const { return running_; }
-    bool isInitialized() const { return initialized_; }
-    size_t getAudioSampleCount() const;
-    float getAudioDurationSeconds() const;
-    
-    // ============================================================
-    // CONFIGURATION
-    // ============================================================
-    
-    void setFrequency(double frequency_hz);
-    void setSampleRate(uint32_t sample_rate);
-    void setOutputFile(const std::string& filename);
-    void setAudioSampleRate(uint32_t audio_sample_rate);
-
-    static void signalHandler(int sig); // Static signal handler
-    
 private:
-    // ============================================================
-    // SETUP METHODS
-    // ============================================================
     
-    void setupComponents();
-    void setupCallbacks();
+    void setupSubcomponents();
+    void setupMessaging();
+    void setupEvents();
+    // void setupTasks();
+
+
+    void toggleRecv();
+    //void run();
     
-    // ============================================================
-    // COMPONENTS
-    // ============================================================
+    Receiver* receiver_;
+    Dispatcher* dispatcher_;
+    AudioSink* audio_; // TODO: rename to audioSink_? 
+    //std::unique_ptr<Receiver> receiver_;
+    // std::unique_ptr<DspProcessor> processor_;
+    // std::unique_ptr<AudioSink> audio_sink_;
     
-    std::unique_ptr<Receiver> receiver_;
-    std::unique_ptr<DspProcessor> processor_;
-    std::unique_ptr<AudioSink> audio_sink_;
     
-    // ============================================================
-    // STATE
-    // ============================================================
-    
-    std::atomic<bool> running_{false};
-    std::atomic<bool> initialized_{false};
-    
-    // ============================================================
-    // CONFIGURATION
-    // ============================================================
-    
-    double frequency_ = 99.9e6;           // 99.9 MHz
-    uint32_t sample_rate_ = 2400000;       // 2.4 Msps
-    uint32_t audio_sample_rate_ = 48000;   // 48 kHz audio
-    std::string output_filename_ = "output.wav";
+    // TODO: move to receiver class?
+    // double frequency_ = 99.9e6;           // 99.9 MHz
+    // uint32_t sample_rate_ = 2400000;       // 2.4 Msps
+    // uint32_t audio_sample_rate_ = 48000;   // 48 kHz audio
+    // std::string output_filename_ = "output.wav";
     Config config_; // TODO: change to Config& config_
     //Config& config_;
 };

@@ -72,3 +72,7 @@ Debug/
 # Targets
 bin/
 obj/
+
+# Doxygen
+Doxyfile
+html/

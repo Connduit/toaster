@@ -1,6 +1,8 @@
 #ifndef TOASTER_AUDIO_H
 #define TOASTER_AUDIO_H
 
+#include "ToasterTypes.h"
+
 #include <vector>
 #include <string>
 #include <fstream>
@@ -12,6 +14,8 @@ public:
     
     AudioSink();
     ~AudioSink();
+
+    void process(const IQData& iqData);
     
     // Configuration
     void setFormat(Format format) { format_ = format; }
