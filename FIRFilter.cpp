@@ -1,50 +1,147 @@
-#include "FIRFilter.h"
 
 #include "FIRFilter.h"
 
-FIRFilter::FIRFilter(const std::vector<float>& coefficients)
+#include <cmath>
+#include <stdexcept>
+
+FIRFilter::FIRFilter(
+    float sampleRate,
+    float cutoffFrequency,
+    int numberOfTaps)
     : 
-    coefficients_(coefficients),
-    buffer_(coefficients.size(), 0.0f),
-    writeIndex_(0)
+    sampleRate_(sampleRate),
+    cutoffFrequency_(cutoffFrequency),
+    numberOfTaps_(numberOfTaps),
+    coefficients_(numberOfTaps),
+    buffer_(numberOfTaps, 0.0f),
+    bufferIndex_(0)
 {
+    if (sampleRate_ <= 0.0f)
+        throw std::invalid_argument("Invalid sample rate");
+
+    if (cutoffFrequency_ <= 0.0f ||
+        cutoffFrequency_ >= sampleRate_ / 2.0f)
+        throw std::invalid_argument("Invalid cutoff frequency");
+
+    if (numberOfTaps_ <= 0 ||
+        numberOfTaps_ % 2 == 0)
+        throw std::invalid_argument(
+            "Number of taps must be positive and odd");
+
+    designLowPass();
+}
+
+void FIRFilter::designLowPass()
+{
+    constexpr float PI = 3.14159265358979323846f;
+
+    const int M = numberOfTaps_ - 1;
+
+    for (int n = 0; n < numberOfTaps_; ++n)
+    {
+        const float k = static_cast<float>(n - M / 2);
+
+        float sinc;
+
+        if (k == 0.0f)
+        {
+            sinc = 2.0f * cutoffFrequency_ / sampleRate_;
+        }
+        else
+        {
+            sinc = std::sin( 2.0f * PI * cutoffFrequency_ * k / sampleRate_) / (PI * k);
+        }
+
+        // Hamming window
+        const float window = 0.54f - 0.46f * std::cos( 2.0f * PI * n / M);
+        coefficients_[n] = sinc * window;
+    }
+
+    // Normalize DC gain to 1
+    float sum = 0.0f;
+
+    for (float coefficient : coefficients_)
+    {
+        sum += coefficient;
+    }
+
+    for (float &coefficient : coefficients_)
+    {
+        coefficient /= sum;
+    }
 }
 
 float FIRFilter::process(float input)
 {
-    // Insert the newest sample into the circular buffer.
-    buffer_[writeIndex_] = input;
+    buffer_[bufferIndex_] = input;
 
     float output = 0.0f;
 
-    // Start at the newest sample.
-    std::size_t bufferIndex = writeIndex_;
+    int index = bufferIndex_;
 
-    for (std::size_t i = 0; i < coefficients_.size(); ++i)
+    for (int i = 0; i < numberOfTaps_; ++i)
     {
-        output += coefficients_[i] * buffer_[bufferIndex];
+        output +=
+            coefficients_[i] *
+            buffer_[index];
 
-        // Move backward through the circular buffer.
-        if (bufferIndex == 0)
-        {
-            bufferIndex = buffer_.size() - 1;
-        }
-        else
-        {
-            --bufferIndex;
-        }
+        --index;
+
+        if (index < 0)
+            index = numberOfTaps_ - 1;
     }
 
-    // Move to the next position in the circular buffer.
-    ++writeIndex_;
+    ++bufferIndex_;
 
-    if (writeIndex_ >= buffer_.size())
-    {
-        writeIndex_ = 0;
-    }
+    if (bufferIndex_ >= numberOfTaps_)
+        bufferIndex_ = 0;
 
     return output;
 }
+
+//FIRFilter::FIRFilter(const std::vector<float>& coefficients)
+//    : 
+//    coefficients_(coefficients),
+//    buffer_(coefficients.size(), 0.0f),
+//    writeIndex_(0)
+//{
+//}
+//
+//float FIRFilter::process(float input)
+//{
+//    // Insert the newest sample into the circular buffer.
+//    buffer_[writeIndex_] = input;
+//
+//    float output = 0.0f;
+//
+//    // Start at the newest sample.
+//    std::size_t bufferIndex = writeIndex_;
+//
+//    for (std::size_t i = 0; i < coefficients_.size(); ++i)
+//    {
+//        output += coefficients_[i] * buffer_[bufferIndex];
+//
+//        // Move backward through the circular buffer.
+//        if (bufferIndex == 0)
+//        {
+//            bufferIndex = buffer_.size() - 1;
+//        }
+//        else
+//        {
+//            --bufferIndex;
+//        }
+//    }
+//
+//    // Move to the next position in the circular buffer.
+//    ++writeIndex_;
+//
+//    if (writeIndex_ >= buffer_.size())
+//    {
+//        writeIndex_ = 0;
+//    }
+//
+//    return output;
+//}
 
 // FIRFilter::FIRFilter(
 //     float sampleRate,

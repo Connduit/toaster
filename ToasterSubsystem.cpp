@@ -36,7 +36,10 @@ ToasterSubsystem::ToasterSubsystem(FilterType filterType)
 }
 
 ToasterSubsystem::ToasterSubsystem(
-    Config& config) : config_(config)
+    Config& config) 
+    : 
+    config_(config),
+    filterType_(FilterType::IIR)
 {
     std::cout << "Custom Config ToasterSubsystem::ToasterSubsystem()" << std::endl;
     // TODO: can i call these in the contructor or will that 
@@ -50,6 +53,24 @@ ToasterSubsystem::ToasterSubsystem(
     // someone needs to explicitly call it after the contructor is done
 }
 
+ToasterSubsystem::ToasterSubsystem(
+    Config& config,
+    FilterType filterType) 
+    : 
+    config_(config),
+    filterType_(filterType)
+{
+    std::cout << "Custom Config+FilterType ToasterSubsystem::ToasterSubsystem()" << std::endl;
+    // TODO: can i call these in the contructor or will that 
+    // mess with the async callback? 
+    setupSubcomponents();
+    setupMessaging();
+    setupEvents();
+    // setupTasks();
+
+    // TODO: rtlsdr_read_async either needs an std::atomic<bool> callback flag or
+    // someone needs to explicitly call it after the contructor is done
+}
 
 ToasterSubsystem::~ToasterSubsystem()
 {
@@ -111,18 +132,11 @@ void ToasterSubsystem::setupMessaging()
     {
         std::cout << "Using FIR filters" << std::endl;
 
-        // TODO: replace these with your actual
-        // FIR coefficient generation.
+        iFilter_ = new FIRFilter(2'400'000.0f, 80'000.0f, 101);
+        qFilter_ = new FIRFilter(2'400'000.0f, 80'000.0f, 101);
+        audioFilter_ = new FIRFilter(2'400'000.0f, 15'000.0f, 101);
 
-        std::vector<float> channelCoefficients = { /* FIR channel filter coefficients */ };
-        std::vector<float> audioCoefficients = {/* FIR audio filter coefficients */};
-
-        iFilter_ = new FIRFilter(channelCoefficients);
-        qFilter_ = new FIRFilter(channelCoefficients);
-        audioFilter_ = new FIRFilter(audioCoefficients);
     }
-
-
 
     channelFilter_ = new ChannelFilter(iFilter_, qFilter_);
     dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audio_);

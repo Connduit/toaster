@@ -3,6 +3,8 @@
 
 #include "ToasterTypes.h"
 
+// TODO: put all filters in a "namespace Filter" ? 
+
 // // TODO: change to be a template class if we code to work with any type of filter/data type?
 class Filter
 {

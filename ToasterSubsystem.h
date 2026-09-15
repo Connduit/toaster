@@ -51,6 +51,7 @@ public:
     ToasterSubsystem();
     ToasterSubsystem(FilterType filterType);
     ToasterSubsystem(Config& config);
+    ToasterSubsystem(Config& config, FilterType filterType);
     ~ToasterSubsystem();
     
     bool start();   // BLOCKS until stop() is called (via signal or manual)

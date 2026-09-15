@@ -15,5 +15,6 @@ std::complex<float> ChannelFilter::process(
     const float filteredI = iFilter_->process(input.real());
     const float filteredQ = qFilter_->process(input.imag());
 
-    return std::complex<float>(filteredI, filteredQ);
+    //return std::complex<float>(filteredI, filteredQ);
+    return {filteredI, filteredQ};
 }

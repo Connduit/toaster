@@ -217,38 +217,19 @@ void DspProcessor::process(const IQData& iqData)
 {
     AudioData audio;
 
+    audio.reserve(iqData.size() / 50 + 1);
+
     for (const auto& sample : iqData)
     {
-        /*
-         * Filter I/Q channels.
-         */
+        const auto filteredIQ = channelFilter_->process(sample);
 
-        std::complex<float> filteredIQ =
-            channelFilter_->process(sample);
+        const float demodulated = demodulator_->processSample(filteredIQ);
 
-        /*
-         * FM demodulation.
-         */
-
-        float demodulated =
-            demodulator_->processSample(filteredIQ);
-
-        /*
-         * Audio low-pass filter.
-         */
-
-        float filteredAudio =
-            audioFilter_->process(demodulated);
-
-        /*
-         * Decimate from 2.4 MHz to 48 kHz.
-         */
+        const float filteredAudio = audioFilter_->process(demodulated);
 
         float decimatedSample;
 
-        if (decimator_->processSample(
-                filteredAudio,
-                decimatedSample))
+        if (decimator_->processSample(filteredAudio, decimatedSample))
         {
             audio.push_back(decimatedSample);
         }

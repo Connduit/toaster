@@ -9,16 +9,39 @@
 class FIRFilter : public Filter
 {
 public:
-    FIRFilter(const std::vector<float>& coefficients);
+    FIRFilter(
+        float sampleRate,
+        float cutoffFrequency,
+        int numberOfTaps);
 
     float process(float input) override;
 
 private:
+    void designLowPass();
+
+    float sampleRate_;
+    float cutoffFrequency_;
+    int numberOfTaps_;
+
     std::vector<float> coefficients_;
     std::vector<float> buffer_;
 
-    std::size_t writeIndex_;
+    int bufferIndex_;
 };
+
+//class FIRFilter : public Filter
+//{
+//public:
+//    //FIRFilter(const std::vector<float>& coefficients);
+//    FIRFilter(float sampleRate, float cutoffFrequency, int numberOfTaps);
+//
+//    float process(float input) override;
+//private:
+//    std::vector<float> coefficients_;
+//    std::vector<float> buffer_;
+//
+//    std::size_t writeIndex_;
+//};
 
 // class FIRFilter : public Filter 
 // {

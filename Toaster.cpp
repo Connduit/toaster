@@ -23,7 +23,8 @@ Toaster::~Toaster()
 void Toaster::createToasterSubsystem()
 {
     std::cout << "Toaster::createToasterSubsystem()" << std::endl;
-    toasterSubsystem_ = new ToasterSubsystem(config_);
+    //toasterSubsystem_ = new ToasterSubsystem(config_);
+    toasterSubsystem_ = new ToasterSubsystem(config_, FilterType::FIR);
 }
 
 void Toaster::startToasterSubsystem()
