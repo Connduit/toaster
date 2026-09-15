@@ -3,7 +3,9 @@
 
 #include "ToasterTypes.h"
 
-// class FMDemodulator
+// TODO: should be virtual class
+
+// Idea is that Demodulator "strips" away carrier signal so ur just left with message signal
 class Demodulator
 {
 public:

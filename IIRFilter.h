@@ -9,7 +9,7 @@ public:
     // lowpass
     IIRFilter(float cutoffFrequency, float sampleRate);
 
-    float process(float input) override;
+    float process(const float& input) override;
 
     AudioData process(const IQData& iqData);
 

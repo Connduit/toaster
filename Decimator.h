@@ -3,6 +3,7 @@
 
 #include "ToasterTypes.h"
 
+// Throws away samples
 class Decimator
 {
 public:

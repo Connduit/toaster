@@ -3,13 +3,17 @@
 
 #include "Filter.h"
 
-// TODO: is this name misleading? since it doesn't inherit from Filter as its parent?
+// Filter recv samples to only look at ones close to the center freq
+//class ChannelFilter : public Filter
 class ChannelFilter
 {
 public:
+    // TODO: ChannelFilter();
     ChannelFilter(Filter* iFilter, Filter* qFilter);
 
-    std::complex<float> process(const std::complex<float>& input);
+    //float process(float& input) override;
+    //float process(const std::complex<float>& input); 
+    std::complex<float> process(const std::complex<float>& input); 
 
 private:
     Filter* iFilter_;

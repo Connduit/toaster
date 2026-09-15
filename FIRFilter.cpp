@@ -71,7 +71,7 @@ void FIRFilter::designLowPass()
     }
 }
 
-float FIRFilter::process(float input)
+float FIRFilter::process(const float& input)
 {
     buffer_[bufferIndex_] = input;
 

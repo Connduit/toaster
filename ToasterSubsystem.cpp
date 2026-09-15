@@ -23,18 +23,6 @@ ToasterSubsystem::ToasterSubsystem()
     //setupTasks();
 }
 
-ToasterSubsystem::ToasterSubsystem(FilterType filterType)
-    : 
-    config_(),
-    filterType_(filterType)
-{
-    std::cout << "Custom Filter ToasterSubsystem::ToasterSubsystem()" << std::endl;
-
-    setupSubcomponents();
-    setupMessaging();
-    setupEvents();
-}
-
 ToasterSubsystem::ToasterSubsystem(
     Config& config) 
     : 
@@ -42,25 +30,6 @@ ToasterSubsystem::ToasterSubsystem(
     filterType_(FilterType::IIR)
 {
     std::cout << "Custom Config ToasterSubsystem::ToasterSubsystem()" << std::endl;
-    // TODO: can i call these in the contructor or will that 
-    // mess with the async callback? 
-    setupSubcomponents();
-    setupMessaging();
-    setupEvents();
-    // setupTasks();
-
-    // TODO: rtlsdr_read_async either needs an std::atomic<bool> callback flag or
-    // someone needs to explicitly call it after the contructor is done
-}
-
-ToasterSubsystem::ToasterSubsystem(
-    Config& config,
-    FilterType filterType) 
-    : 
-    config_(config),
-    filterType_(filterType)
-{
-    std::cout << "Custom Config+FilterType ToasterSubsystem::ToasterSubsystem()" << std::endl;
     // TODO: can i call these in the contructor or will that 
     // mess with the async callback? 
     setupSubcomponents();
@@ -109,6 +78,7 @@ void ToasterSubsystem::setupMessaging()
     std::cout << "ToasterSubsystem::setupMessaging()" << std::endl;
     //receiver_->setOnData([this](const std::vector<std::complex<float>>& iq_samples) {});
     
+    filterType_ = config_.filterType_; // TODO: 
 
     //receiver_ = new Receiver(config_.center_freq, config_.other_stuff, etc...);
     receiver_ = new Receiver();

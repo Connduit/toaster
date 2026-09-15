@@ -21,6 +21,17 @@ Stage 4: Demodulation
 Stage 5: Post Processing
 	- De-emphasis Filter (Simple RC Lowpass)
 */
+
+
+/*
+Audio:
+	recv
+	filter
+	decimation
+	demodulation
+	de-emphasis
+	audio output
+*/
 int main()
 {
 	Toaster toaster;

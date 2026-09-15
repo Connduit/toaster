@@ -14,7 +14,7 @@ public:
         float cutoffFrequency,
         int numberOfTaps);
 
-    float process(float input) override;
+    float process(const float& input) override;
 
 private:
     void designLowPass();

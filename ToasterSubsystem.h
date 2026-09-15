@@ -19,11 +19,6 @@
 #include <complex>
 
 
-enum class FilterType
-{
-    IIR,
-    FIR
-};
 
 // Forward declarations
 class Receiver;
@@ -49,9 +44,7 @@ class ToasterSubsystem
 {
 public:
     ToasterSubsystem();
-    ToasterSubsystem(FilterType filterType);
     ToasterSubsystem(Config& config);
-    ToasterSubsystem(Config& config, FilterType filterType);
     ~ToasterSubsystem();
     
     bool start();   // BLOCKS until stop() is called (via signal or manual)

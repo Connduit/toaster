@@ -17,7 +17,8 @@ AudioData IIRFilter::process(const IQData& iqData)
     return audio;
 }
 
-float IIRFilter::process(float input)
+//float IIRFilter::process(float& input)
+float IIRFilter::process(const float& input)
 {
     state_ += alpha_ * (input - state_);
 
