@@ -21,7 +21,12 @@ class DspProcessor
 public:
     //DspProcessor( Filter* fmFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
     //DspProcessor( Demodulator* demodulator, Decimator* decimator, Audio* audio);
-    DspProcessor(ChannelFilter* channelFilter, Filter* audioFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
+    DspProcessor(
+        ChannelFilter* channelFilter, 
+        Filter* audioFilter, 
+        Demodulator* demodulator, 
+        Decimator* decimator, 
+        Audio* audio);
 
     ~DspProcessor();
 
@@ -39,7 +44,7 @@ private:
     ChannelFilter* channelFilter_; 
     Filter* audioFilter_;
 
-    Filter* fmFilter_;
+    //Filter* fmFilter_;
     //Filter* audioFilter_;
     Demodulator* demodulator_;
     Decimator* decimator_;
@@ -54,7 +59,8 @@ private:
 
     std::thread workerThread_;
 
-    std::atomic<bool> running_;
+    //std::atomic<bool> running_;
+    bool running_;
 };
 
 

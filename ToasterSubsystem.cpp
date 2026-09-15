@@ -11,14 +11,28 @@
 #include <thread>
 #include <cstring>
 
-
-ToasterSubsystem::ToasterSubsystem() : config_()
+ToasterSubsystem::ToasterSubsystem()
+    : 
+    config_(),
+    filterType_(FilterType::IIR)
 {
     std::cout << "Default ToasterSubsystem::ToasterSubsystem()" << std::endl;
     setupSubcomponents();
     setupMessaging();
     setupEvents();
     //setupTasks();
+}
+
+ToasterSubsystem::ToasterSubsystem(FilterType filterType)
+    : 
+    config_(),
+    filterType_(filterType)
+{
+    std::cout << "Custom Filter ToasterSubsystem::ToasterSubsystem()" << std::endl;
+
+    setupSubcomponents();
+    setupMessaging();
+    setupEvents();
 }
 
 ToasterSubsystem::ToasterSubsystem(
@@ -36,31 +50,29 @@ ToasterSubsystem::ToasterSubsystem(
     // someone needs to explicitly call it after the contructor is done
 }
 
+
 ToasterSubsystem::~ToasterSubsystem()
 {
     std::cout << "ToasterSubsystem::~ToasterSubsystem()" << std::endl;
     stop();
 
     delete dspProcessor_;
+
     delete audio_;
     delete audioSink_;
-    //delete fmFilter_;
+
     delete decimator_;
     delete demodulator_;
+
+    delete channelFilter_;
+
+    delete iFilter_;
+    delete qFilter_;
+    delete audioFilter_;
+
     delete dispatcher_;
     delete receiver_;
-    if (iFilter_)
-    {
-        delete iFilter_;
-    }
-    if (qFilter_)
-    {
-        delete qFilter_;
-    }
-    if (audioFilter_)
-    {
-        delete audioFilter_;
-    }
+
 }
 
 
@@ -88,14 +100,31 @@ void ToasterSubsystem::setupMessaging()
     //fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
     //fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
     //audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
-    iFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
-    qFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
-    channelFilter_ = new ChannelFilter(iFilter_, qFilter_);
-    audioFilter_ = new IIRFilter(15'000.0f, 2'400'000.0f);
 
-    //dspProcessor_ = new DspProcessor(fmFilter_, demodulator_, decimator_, audio_);
-    //dspProcessor_ = new DspProcessor(demodulator_, decimator_, audio_);
-    //dspProcessor_ = new DspProcessor(iFilter_, qFilter_, audioFilter_, demodulator_, decimator_, audio_);
+    if (filterType_ == FilterType::IIR)
+    {
+        iFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
+        qFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
+        audioFilter_ = new IIRFilter(15'000.0f, 2'400'000.0f);
+    }
+    else if (filterType_ == FilterType::FIR)
+    {
+        std::cout << "Using FIR filters" << std::endl;
+
+        // TODO: replace these with your actual
+        // FIR coefficient generation.
+
+        std::vector<float> channelCoefficients = { /* FIR channel filter coefficients */ };
+        std::vector<float> audioCoefficients = {/* FIR audio filter coefficients */};
+
+        iFilter_ = new FIRFilter(channelCoefficients);
+        qFilter_ = new FIRFilter(channelCoefficients);
+        audioFilter_ = new FIRFilter(audioCoefficients);
+    }
+
+
+
+    channelFilter_ = new ChannelFilter(iFilter_, qFilter_);
     dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audio_);
 }
 

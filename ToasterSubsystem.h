@@ -18,10 +18,21 @@
 #include <vector>
 #include <complex>
 
+
+enum class FilterType
+{
+    IIR,
+    FIR
+};
+
 // Forward declarations
 class Receiver;
-class DspProcessor;
+class Dispatcher;
+class Demodulator;
+class Decimator;
+class Audio;
 class AudioSink;
+class DspProcessor;
 
 /**
  * ToasterSubsystem - Orchestrates the SDR receiver, DSP processing, and audio output
@@ -38,6 +49,7 @@ class ToasterSubsystem
 {
 public:
     ToasterSubsystem();
+    ToasterSubsystem(FilterType filterType);
     ToasterSubsystem(Config& config);
     ~ToasterSubsystem();
     
@@ -54,18 +66,22 @@ private:
 
     void toggleRecv();
     //void run();
+
+    Config config_; // TODO: change to Config& config_
+    //Config& config_;
+
+    FilterType filterType_;
     
     Receiver* receiver_;
     Dispatcher* dispatcher_;
-    Demodulator* demodulator_;
-    Decimator* decimator_;
-    AudioSink* audioSink_; 
-    ChannelFilter* channelFilter_;
+
     Filter* iFilter_;
     Filter* qFilter_;
     Filter* audioFilter_;
-    //Filter* fmFilter_;
-    //Filter* audioFilter_;
+    ChannelFilter* channelFilter_;
+    Demodulator* demodulator_;
+    Decimator* decimator_;
+    AudioSink* audioSink_; 
     Audio* audio_;
     DspProcessor* dspProcessor_;
     //std::unique_ptr<Receiver> receiver_;
@@ -78,8 +94,6 @@ private:
     // uint32_t sample_rate_ = 2400000;       // 2.4 Msps
     // uint32_t audio_sample_rate_ = 48000;   // 48 kHz audio
     // std::string output_filename_ = "output.wav";
-    Config config_; // TODO: change to Config& config_
-    //Config& config_;
 };
 
 // class ToasterSubsystem

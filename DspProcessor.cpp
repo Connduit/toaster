@@ -149,64 +149,111 @@ void DspProcessor::processLoop()
 
 // TODO: Note how this function performs computations on a sample by sample basis, rather than putting everything
 // in a vector then passing it around
+// void DspProcessor::process(const IQData& iqData)
+// {
+//     AudioData audio;
+// 
+//     audio.reserve(iqData.size() / 50 + 1);
+// 
+//     for (const auto& sample : iqData)
+//     {
+//         auto filteredIQ = channelFilter_->process(sample);
+// 
+//         auto demodulated = demodulator_->processSample(filteredIQ);
+// 
+//         auto filteredAudio = audioFilter_->process(demodulated);
+// 
+//         float decimatedSample;
+// 
+//         if (decimator_->processSample( filteredAudio, decimatedSample))
+//         {
+//             audio.push_back(decimatedSample);
+//         }
+// 
+// 
+//         // -------------------------
+//         // Channel filter
+//         // -------------------------
+// 
+//         // const float filteredI = channelFilterI_->process(sample.real());
+//         // const float filteredQ = channelFilterQ_->process(sample.imag());
+// 
+//         // const std::complex<float> filteredIQ(filteredI, filteredQ);
+// 
+//         // // -------------------------
+//         // // FM demodulation
+//         // // -------------------------
+// 
+//         // const float demodulated =
+//         //     demodulator_->processSample(filteredIQ);
+// 
+//         // // -------------------------
+//         // // Audio filter
+//         // // -------------------------
+// 
+//         // const float filteredAudio = audioFilter_->process(demodulated);
+// 
+//         // // -------------------------
+//         // // Decimation
+//         // // -------------------------
+// 
+//         // float decimatedSample;
+// 
+//         // if (decimator_->processSample(filteredAudio, decimatedSample))
+//         // {
+//         //     audio.push_back(decimatedSample);
+//         // }
+//     }
+// 
+//     // Send the entire resulting audio buffer
+//     // to Audio at once.
+//     if (!audio.empty())
+//     {
+//         audio_->process(audio);
+//     }
+// }
+
 void DspProcessor::process(const IQData& iqData)
 {
     AudioData audio;
 
-    audio.reserve(iqData.size() / 50 + 1);
-
     for (const auto& sample : iqData)
     {
-        auto filteredIQ = channelFilter_->process(sample);
+        /*
+         * Filter I/Q channels.
+         */
 
-        auto demodulated = demodulator_->processSample(filteredIQ);
+        std::complex<float> filteredIQ =
+            channelFilter_->process(sample);
 
-        auto filteredAudio = audioFilter_->process(demodulated);
+        /*
+         * FM demodulation.
+         */
+
+        float demodulated =
+            demodulator_->processSample(filteredIQ);
+
+        /*
+         * Audio low-pass filter.
+         */
+
+        float filteredAudio =
+            audioFilter_->process(demodulated);
+
+        /*
+         * Decimate from 2.4 MHz to 48 kHz.
+         */
 
         float decimatedSample;
 
-        if (decimator_->processSample( filteredAudio, decimatedSample))
+        if (decimator_->processSample(
+                filteredAudio,
+                decimatedSample))
         {
             audio.push_back(decimatedSample);
         }
-
-
-        // -------------------------
-        // Channel filter
-        // -------------------------
-
-        // const float filteredI = channelFilterI_->process(sample.real());
-        // const float filteredQ = channelFilterQ_->process(sample.imag());
-
-        // const std::complex<float> filteredIQ(filteredI, filteredQ);
-
-        // // -------------------------
-        // // FM demodulation
-        // // -------------------------
-
-        // const float demodulated =
-        //     demodulator_->processSample(filteredIQ);
-
-        // // -------------------------
-        // // Audio filter
-        // // -------------------------
-
-        // const float filteredAudio = audioFilter_->process(demodulated);
-
-        // // -------------------------
-        // // Decimation
-        // // -------------------------
-
-        // float decimatedSample;
-
-        // if (decimator_->processSample(filteredAudio, decimatedSample))
-        // {
-        //     audio.push_back(decimatedSample);
-        // }
     }
 
-    // Send the entire resulting audio buffer
-    // to Audio at once.
     if (!audio.empty())
     {
         audio_->process(audio);
