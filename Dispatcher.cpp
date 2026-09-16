@@ -1,11 +1,30 @@
 #include "Dispatcher.h"
 #include <iostream>
+#include <cstdint>
 
 
 void Dispatcher::registerHandler(int type, Handler handler)
 {
     handlers_[type] = std::move(handler);
 }
+
+/*
+void Dispatcher::dispatch(const uint8_t* buf, uint32_t len) 
+{
+    // std::cout << "Dispatcher::dispatch()" << std::endl;
+    // Decide which handler should receive the IQ data.
+
+    //auto it = handlers_.find(msg.header_.messageType_);
+    auto it = handlers_.find(1);
+    if (it != handlers_.end())
+    {
+        it->second(buf, len);
+    }
+    else
+    {
+        std::cout << "No handlers found." << std::endl; 
+    }
+}*/
 
 void Dispatcher::dispatch(const IQData& iqData)
 {

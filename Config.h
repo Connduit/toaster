@@ -6,6 +6,8 @@
 
 typedef struct Config
 {
+        // TODO: SinkConfig
+        // TODO: ReceiverConfig
         Config() :
                 //filterType_(FilterType::LOWPASS) // TODO: filter type bit value combo to keep track of all filters that are needed for the configuration? 
                 filterType_(FilterType::FIR), // TODO: rename to channelFilterType_ ?

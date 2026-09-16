@@ -43,10 +43,10 @@ class DspProcessor;
 class ToasterSubsystem
 {
 public:
-    ToasterSubsystem();
-    ToasterSubsystem(Config& config);
+    explicit ToasterSubsystem(const Config& config);
     ~ToasterSubsystem();
     
+    // TODO: rename start to run?
     bool start();   // BLOCKS until stop() is called (via signal or manual)
     void stop();    // Stops the receiver and unblocks start()
     
@@ -59,20 +59,18 @@ private:
 
 
     void toggleRecv();
-    //void run();
 
     Config config_; // TODO: change to Config& config_
-    //Config& config_;
 
-    FilterType filterType_;
-    
     Receiver* receiver_;
+
     Dispatcher* dispatcher_;
 
-    Filter* iFilter_;
-    Filter* qFilter_;
+    // first filter - used for reducing out-of-band signals and to prevent aliasing
+    Filter* channelFilter_;
+
+
     Filter* audioFilter_;
-    ChannelFilter* channelFilter_;
     Demodulator* demodulator_;
     Decimator* decimator_;
     AudioSink* audioSink_; 

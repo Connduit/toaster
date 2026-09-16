@@ -3,6 +3,7 @@
 
 #include "ToasterTypes.h"
 
+#include <cstdint>
 #include <complex>
 #include <functional>
 #include <unordered_map>
@@ -17,6 +18,7 @@ public:
     // Type would be an enum representing the component i want to send the iq data too
     void registerHandler(int type, Handler handler);
     //void registerHandler(Handler handler);
+    void dispatch(const uint8_t* buf, uint32_t len);
     void dispatch(const IQData& iqData);
 
 private:

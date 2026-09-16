@@ -9,6 +9,16 @@ Audio::Audio(AudioSink* audioSink)
 {
 }
 
+void Audio::process(float sample)
+{
+    //std::cout << "Audio::process()" << std::endl;
+
+    if (audioSink_)
+    {
+        audioSink_->pushSample(sample);
+    }
+}
+/*
 void Audio::process(const std::vector<float>& audio)
 {
     //std::cout << "Audio::process()" << std::endl;
@@ -17,4 +27,4 @@ void Audio::process(const std::vector<float>& audio)
     {
         audioSink_->process(audio);
     }
-}
+}*/

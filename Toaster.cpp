@@ -18,6 +18,12 @@ Toaster::Toaster() : config_()
 Toaster::~Toaster()
 {
     std::cout << "Toaster destroyed" << std::endl;
+    if (toasterSubsystem_)
+    {
+        sleep(5);
+        delete toasterSubsystem_;
+    }
+
 }
 
 void Toaster::createToasterSubsystem()

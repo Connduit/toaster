@@ -36,7 +36,9 @@ int main()
 {
 	Toaster toaster;
 	toaster.createToasterSubsystem();
-    // TODO: need to setfreq
 	toaster.startToasterSubsystem();
+	//toaster.stopToasterSubsystem();
+
+	return 0;
 }
 

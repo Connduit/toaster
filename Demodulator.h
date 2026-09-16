@@ -11,11 +11,14 @@ class Demodulator
 public:
     Demodulator();
     AudioData process(const IQData& iqData);
+    float process(float i, float q);
     float processSample(const std::complex<float>& current);
 
 private:
     std::complex<float> previousIQ_{};
     bool hasPreviousIQ_ = false;
+    float prevI_ = 0.0f;
+    float prevQ_ = 0.0f;
     //std::complex<float> previousIQ_;
     //bool hasPreviousIQ_;
 };

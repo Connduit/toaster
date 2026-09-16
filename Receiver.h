@@ -18,11 +18,13 @@ class Receiver
 public:
     //using IQData = std::vector<std::complex<float>>;
     using IQCallback = std::function<void(const IQData&)>;
+    using RawSampleCallback = std::function<void(const uint8_t *buf, uint32_t len)>;
 
     Receiver();
     ~Receiver();
 
     void setIQCallback(IQCallback callback);
+    void setRawSampleCallback(RawSampleCallback callback);
 
     void startAsync();
     void stopAsync();
@@ -38,17 +40,15 @@ private:
 
     void receive();
 
-    void processRawData(
-        unsigned char* buffer,
-        uint32_t length
-    );
+    void processRawData( unsigned char* buffer, uint32_t length);
 
-    rtlsdr_dev_t* device_;
+    rtlsdr_dev_t* device_; // = nullptr; // constructor inits device_ to nullptr
 
     std::thread receiveThread_;
     std::atomic<bool> receiving_;
 
     IQCallback iqCallback_;
+    RawSampleCallback rawSampleCallback_;
 
     // TODO: Consider replacing IQData with an IQData struct later
     // if we need metadata such as sample rate, center frequency,

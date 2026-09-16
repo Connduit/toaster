@@ -10,8 +10,8 @@ class Filter
 {
 public:
     virtual ~Filter() = default;
-    //virtual float process(const float& input) = 0;
-    virtual float process(const float& input) = 0;
+    virtual float process(float sample) = 0;
+    virtual void reset() = 0;
     // TODO: generateCoefficients();
 
 private:

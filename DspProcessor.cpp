@@ -25,17 +25,17 @@
 
 // TODO: dsp should take a dictionary of filters? map<enum FilterType, Filter>
 DspProcessor::DspProcessor(
-    ChannelFilter* channelFilter,
+    Filter* channelFilter,
     Filter* audioFilter,
     Demodulator* demodulator,
     Decimator* decimator,
-    Audio* audio)
+    AudioSink* audioSink)
     : 
     channelFilter_(channelFilter),
     audioFilter_(audioFilter),
     demodulator_(demodulator),
     decimator_(decimator),
-    audio_(audio),
+    audioSink_(audioSink),
     running_(false)
 {
 }
@@ -61,13 +61,13 @@ DspProcessor::~DspProcessor()
 
 void DspProcessor::start()
 {
+    std::cout << "dsp proc :: start()\n";
     if (running_)
         return;
 
     running_ = true;
 
-    workerThread_ =
-        std::thread(&DspProcessor::processLoop, this);
+    //workerThread_ = std::thread(&DspProcessor::processLoop, this);
 }
 
 void DspProcessor::stop()
@@ -76,19 +76,19 @@ void DspProcessor::stop()
         return;
 
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        //std::lock_guard<std::mutex> lock(mutex_);
 
         running_ = false;
 
         // Discard any IQ data that has not been processed yet.
-        std::queue<IQData> empty;
-        queue_.swap(empty);
+        //std::queue<IQData> empty;
+        //queue_.swap(empty);
     }
 
-    condition_.notify_one();
+    //condition_.notify_one();
 
-    if (workerThread_.joinable())
-        workerThread_.join();
+    //if (workerThread_.joinable())
+    //    workerThread_.join();
 }
 
 void DspProcessor::enqueue(const IQData& iqData)
@@ -133,8 +133,9 @@ void DspProcessor::processLoop()
     std::cout << "DspProcessor::processLoop() finished" << std::endl;
 }
 
-// void DspProcessor::process(const IQData& iqData)
-// {
+void DspProcessor::process(const IQData& iqData)
+{
+    std::cout << "DspProcessor::process(const IQData& iqData)\n";
 //     auto filteredIQ =
 //         fmFilter_->process(iqData); // TODO: fmFilter_ should be renamed/changed to whatever the incoming filter is?
 // 
@@ -145,7 +146,7 @@ void DspProcessor::processLoop()
 //         decimator_->process(demodulated);
 // 
 //     audio_->process(audio);
-// }
+}
 
 // TODO: Note how this function performs computations on a sample by sample basis, rather than putting everything
 // in a vector then passing it around
@@ -213,30 +214,58 @@ void DspProcessor::processLoop()
 //     }
 // }
 
-void DspProcessor::process(const IQData& iqData)
+//void DspProcessor::process(const IQData& iqData)
+//{
+//    AudioData audio;
+//
+//    audio.reserve(iqData.size() / 50 + 1);
+//
+//    for (const auto& sample : iqData)
+//    {
+//        const auto filteredIQ = channelFilter_->process(sample); // float i and float q
+//
+//        const float demodulated = demodulator_->processSample(filteredIQ);
+//
+//        const float filteredAudio = audioFilter_->process(demodulated);
+//
+//        float decimatedSample;
+//
+//        if (decimator_->processSample(filteredAudio, decimatedSample))
+//        {
+//            audio.push_back(decimatedSample);
+//        }
+//    }
+//
+//    if (!audio.empty())
+//    {
+//        audio_->process(audio);
+//    }
+//}
+
+
+void DspProcessor::processBuffer(const uint8_t* buf, uint32_t len)
 {
-    AudioData audio;
-
-    audio.reserve(iqData.size() / 50 + 1);
-
-    for (const auto& sample : iqData)
+    for (uint32_t n = 0; n + 1 < len; n += 2)
     {
-        const auto filteredIQ = channelFilter_->process(sample);
+        float i = (static_cast<float>(buf[n]) - 127.5f) / 127.5f;
+        float q = (static_cast<float>(buf[n + 1]) - 127.5f) / 127.5f;
 
-        const float demodulated = demodulator_->processSample(filteredIQ);
+        float demodulated = demodulator_->process(i, q); // merges i and q into a single number
+        float filtered = channelFilter_->process(demodulated);
 
-        const float filteredAudio = audioFilter_->process(demodulated);
-
-        float decimatedSample;
-
-        if (decimator_->processSample(filteredAudio, decimatedSample))
+        float decimated;
+        if (decimator_->push(filtered, decimated))
         {
-            audio.push_back(decimatedSample);
+            float deemphasized = audioFilter_->process(decimated); // audio filter?
+            audioSink_->pushSample(deemphasized);
+            //float deemphasized = deemphasis_.process(decimated); // audio filter?
+            //sink_->pushSample(deemphasized);
         }
     }
+    audioSink_->flush();
+}
 
-    if (!audio.empty())
-    {
-        audio_->process(audio);
-    }
+void DspProcessor::flush()
+{
+    audioSink_->flush();
 }

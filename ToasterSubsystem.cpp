@@ -4,30 +4,33 @@
 #include "DspProcessor.h"
 #include "Audio.h"
 #include "AudioSink.h"
+#include "WavSink.h"
+#include "PcmSink.h"
+//
+#include "Filter.h"
+#include "FIRFilter.h"
+#include "IIRFilter.h"
 
+#include "FIRBandPassFilter.h"
+#include "FIRBandStopFilter.h"
+#include "FIRHighPassFilter.h"
+#include "FIRLowPassFilter.h"
+
+#include "IIRBandPassFilter.h"
+#include "IIRBandStopFilter.h"
+#include "IIRHighPassFilter.h"
+#include "IIRLowPassFilter.h"
+//
 #include <iostream>
 #include <csignal>
 #include <chrono>
 #include <thread>
 #include <cstring>
 
-ToasterSubsystem::ToasterSubsystem()
-    : 
-    config_(),
-    filterType_(FilterType::IIR)
-{
-    std::cout << "Default ToasterSubsystem::ToasterSubsystem()" << std::endl;
-    setupSubcomponents();
-    setupMessaging();
-    setupEvents();
-    //setupTasks();
-}
-
 ToasterSubsystem::ToasterSubsystem(
-    Config& config) 
+    const Config& config) 
     : 
-    config_(config),
-    filterType_(FilterType::IIR)
+    config_(config)
 {
     std::cout << "Custom Config ToasterSubsystem::ToasterSubsystem()" << std::endl;
     // TODO: can i call these in the contructor or will that 
@@ -44,11 +47,11 @@ ToasterSubsystem::ToasterSubsystem(
 ToasterSubsystem::~ToasterSubsystem()
 {
     std::cout << "ToasterSubsystem::~ToasterSubsystem()" << std::endl;
-    stop();
+    //stop();
 
     delete dspProcessor_;
 
-    delete audio_;
+    //delete audio_;
     delete audioSink_;
 
     delete decimator_;
@@ -56,8 +59,6 @@ ToasterSubsystem::~ToasterSubsystem()
 
     delete channelFilter_;
 
-    delete iFilter_;
-    delete qFilter_;
     delete audioFilter_;
 
     delete dispatcher_;
@@ -78,38 +79,32 @@ void ToasterSubsystem::setupMessaging()
     std::cout << "ToasterSubsystem::setupMessaging()" << std::endl;
     //receiver_->setOnData([this](const std::vector<std::complex<float>>& iq_samples) {});
     
-    filterType_ = config_.filterType_; // TODO: 
-
     //receiver_ = new Receiver(config_.center_freq, config_.other_stuff, etc...);
     receiver_ = new Receiver();
     dispatcher_ = new Dispatcher();
     demodulator_ = new Demodulator();
     decimator_ = new Decimator(50);
     //audio_ = new AudioSink(config_.center_freq, config_.other_stuff, etc...);
-    audioSink_ = new AudioSink();
-    audio_ = new Audio(audioSink_);
+    audioSink_ = new WavSink();
+    //audio_ = new Audio(audioSink_);
     //fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
     //fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
     //audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
 
-    if (filterType_ == FilterType::IIR)
+    if (config_.filterType_ == FilterType::IIR)
     {
-        iFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
-        qFilter_ = new IIRFilter(80'000.0f, 2'400'000.0f);
-        audioFilter_ = new IIRFilter(15'000.0f, 2'400'000.0f);
+        // cutoff, sample rate
+        channelFilter_ = new IIRLowPassFilter(80'000.0f, 2'400'000.0f);
+        audioFilter_ = new IIRLowPassFilter(15'000.0f, 2'400'000.0f);
     }
-    else if (filterType_ == FilterType::FIR)
+    else if (config_.filterType_ == FilterType::FIR)
     {
-        std::cout << "Using FIR filters" << std::endl;
-
-        iFilter_ = new FIRFilter(2'400'000.0f, 80'000.0f, 101);
-        qFilter_ = new FIRFilter(2'400'000.0f, 80'000.0f, 101);
-        audioFilter_ = new FIRFilter(2'400'000.0f, 15'000.0f, 101);
-
+        // numTaps, cutoff, sample rate
+        channelFilter_ = new FIRLowPassFilter(101, 80'000.0f, 2'400'000.0f);
+        audioFilter_ = new FIRLowPassFilter(101, 15'000.0f, 2'400'000.0f);
     }
 
-    channelFilter_ = new ChannelFilter(iFilter_, qFilter_);
-    dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audio_);
+    dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audioSink_);
 }
 
 
@@ -149,15 +144,25 @@ void ToasterSubsystem::setupEvents()
     //     audio_->process(audio);
     // });
 
-    receiver_->setIQCallback([this](const IQData &iqData)
-    { 
-        dispatcher_->dispatch(iqData);
-    });
+    // receiver callbacks
+    //receiver_->setIQCallback([this](const IQData &iqData)
+    //{ 
+    //    dispatcher_->dispatch(iqData);
+    //});
 
-    dispatcher_->registerHandler(0, [this](const IQData &iqData)
-    { 
-        dspProcessor_->enqueue(iqData);
+    receiver_->setRawSampleCallback([this](const uint8_t* buf, uint32_t len) 
+    {
+        //dispatcher_->dispatch(buf, len); 
+        dspProcessor_->processBuffer(buf, len);
     });
+    audioSink_->flush();
+
+
+    // dispatcher callbacks
+    //dispatcher_->registerHandler(0, [this](const IQData &iqData)
+    //{ 
+    //    dspProcessor_->enqueue(iqData);
+    //});
 
     //////////////////////
     // 	// messageParser_ calls back to Dispatcher
@@ -173,15 +178,6 @@ void ToasterSubsystem::setupEvents()
     // 		controller_->handleDefault(msg);
     // 	});
 
-    //////////////////////
-    // Create the DSP processor
-    // processor_ = std::make_unique<DspProcessor>(audio_sample_rate_);
-    
-    // Create the audio sink (saves to file)
-    // audio_sink_ = std::make_unique<AudioSink>();
-    // audio_sink_->setFilename(output_filename_);
-    // audio_sink_->setSampleRate(audio_sample_rate_);
-    // audio_sink_->setFormat(AudioSink::Format::WAV);
 }
 
 bool ToasterSubsystem::start()
@@ -195,7 +191,7 @@ bool ToasterSubsystem::start()
 
     // TODO: wait for commands - implement this later
     // For now we will just automatically start receiving
-    dspProcessor_->start();
+    //dspProcessor_->start(); // TODO: ? 
     receiver_->startAsync();
 
     // std::string command
@@ -238,11 +234,11 @@ void ToasterSubsystem::stop()
 
     dspProcessor_->stop();
 
-    std::cout << "STOP: DSP stopped" << std::endl;
+    //std::cout << "STOP: DSP stopped" << std::endl;
 
-    audioSink_->finalize();
+    audioSink_->flush();
 
-    std::cout << "STOP: audio finalized" << std::endl;
+    //std::cout << "STOP: audio finalized" << std::endl;
 }
 
 
@@ -261,19 +257,3 @@ void ToasterSubsystem::toggleRecv()
         receiver_->startAsync();
     }
 }
-
-
-// void ToasterSubsystem::run()
-// {
-//     receiver_->startAsync();
-// 
-//     char input;
-// 
-//     while (std::cin.get(input))
-//     {
-//         if (input == ' ')
-//         {
-//             toggleRecv();
-//         }
-//     }
-// }

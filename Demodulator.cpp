@@ -29,6 +29,19 @@ float Demodulator::processSample(
     return audio;
 }
 
+// FmDemodulator
+float Demodulator::process(float i, float q)
+{
+    float re = i * prevI_ + q * prevQ_;
+    float im = q * prevI_ - i * prevQ_;
+
+    prevI_ = i;
+    prevQ_ = q;
+
+    return std::atan2(im, re);
+
+}
+
 AudioData Demodulator::process(const IQData& iqData)
 {
     AudioData audio;

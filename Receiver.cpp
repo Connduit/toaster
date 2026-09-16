@@ -40,6 +40,11 @@ Receiver::~Receiver()
     }
 }
 
+void Receiver::setRawSampleCallback(RawSampleCallback callback)
+{
+    rawSampleCallback_ = std::move(callback);
+}
+
 void Receiver::setIQCallback(IQCallback callback)
 {
     iqCallback_ = std::move(callback);
@@ -75,12 +80,12 @@ void Receiver::stopAsync()
 
     rtlsdr_cancel_async(device_);
 
-    std::cout << "Receiver::stopAsync(): joining" << std::endl;
+    //std::cout << "Receiver::stopAsync(): joining" << std::endl;
 
-    if (receiveThread_.joinable())
-    {
-        receiveThread_.join();
-    }
+    //if (receiveThread_.joinable())
+    //{
+    //    receiveThread_.join();
+    //}
 
     std::cout << "Receiver::stopAsync(): finished" << std::endl;
 }
@@ -117,13 +122,8 @@ void Receiver::receive()
 
     std::cout << "Calling rtlsdr_read_async()" << std::endl;
 
-    result = rtlsdr_read_async(
-        device_,
-        &Receiver::rtlsdrCallback,
-        this,
-        0,
-        0
-    );
+    result = rtlsdr_read_async(device_, &Receiver::rtlsdrCallback, this, 0, 0);
+    result = rtlsdr_read_async(device_, &Receiver::rtlsdrCallback, this, 0, 0);
 
     std::cout << "rtlsdr_read_async() RETURNED: "
               << result
@@ -158,14 +158,19 @@ std::cout
 void Receiver::rtlsdrCallback(unsigned char* buffer, uint32_t length, void* context)
 {
     //std::cout << "Receiver::rtlsdrCallback()" << std::endl;
-    auto *receiver = static_cast<Receiver *>(context);
+    auto *receiver = static_cast<Receiver*>(context);
 
     if (!receiver->receiving_)
     {
         return;
     }
 
-    receiver->processRawData(buffer, length);
+    if (receiver && receiver->rawSampleCallback_)
+    {
+        receiver->rawSampleCallback_(buffer, length);
+    }
+
+    //receiver->processRawData(buffer, length);
 }
 
 void Receiver::processRawData(unsigned char* buffer, uint32_t length)
