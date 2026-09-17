@@ -4,9 +4,9 @@
 #define TOASTER_RECEIVER_H
 
 #include "ToasterTypes.h"
+#include "RtlSdrDevice.h"
 
 // TODO: in the far far future, be able to handle multiple receiver devices
-#include <rtl-sdr.h>
 #include <atomic>
 #include <complex>
 #include <functional>
@@ -16,39 +16,27 @@
 class Receiver
 {
 public:
-    //using IQData = std::vector<std::complex<float>>;
-    using IQCallback = std::function<void(const IQData&)>;
-    using RawSampleCallback = std::function<void(const uint8_t *buf, uint32_t len)>;
-
     Receiver();
-    ~Receiver();
+    //explicit Receiver(const ReceiverConfig &config);
 
-    void setIQCallback(IQCallback callback);
-    void setRawSampleCallback(RawSampleCallback callback);
+    // Opens and configures the device (sample rate, frequency, gain).
+    // Returns false on failure.
+    bool open();
 
-    void startAsync();
-    void stopAsync();
+    // Streams raw IQ buffers to `callback` until stop() is called.
+    // Blocks the calling thread.
+    void startAsync(RtlSdrDevice::SampleCallback callback);
 
-    bool isReceiving() const;
+    // Safe to call from a signal handler; unblocks startAsync().
+    void stop();
+
+    static int getDeviceCount();
+    static std::string getDeviceName(int index);
+
 
 private:
-    static void rtlsdrCallback(
-        unsigned char* buffer,
-        uint32_t length,
-        void* context
-    );
-
-    void receive();
-
-    void processRawData( unsigned char* buffer, uint32_t length);
-
-    rtlsdr_dev_t* device_; // = nullptr; // constructor inits device_ to nullptr
-
-    std::thread receiveThread_;
-    std::atomic<bool> receiving_;
-
-    IQCallback iqCallback_;
-    RawSampleCallback rawSampleCallback_;
+    //ReceiverConfig config_;
+    RtlSdrDevice source_; // rename var
 
     // TODO: Consider replacing IQData with an IQData struct later
     // if we need metadata such as sample rate, center frequency,

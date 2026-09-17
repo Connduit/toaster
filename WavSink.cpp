@@ -41,17 +41,16 @@ WavSink::WavSink(const std::string& path, uint32_t sampleRateHz, int numChannels
     writePlaceholderHeader();
 }
 
-WavSink::~WavSink() {
-    std::cout << "wavsink deconstructor\n";
-    if (file_) 
+WavSink::~WavSink()
+{
+    if (file_)
     {
-        std::cout << "attmping fulush \n";
         flush();
-        std::cout << "flush down\n";
+
         patchHeaderSizes();
-        std::cout << "patch done\n";
+
         fclose(file_);
-        std::cout << "good close\n";
+
         file_ = nullptr;
     }
 }
@@ -106,16 +105,27 @@ void WavSink::pushSample(float sample)
 
     if (buffer_.size() >= kFlushThresholdSamples) flush();
 }
-
-void WavSink::flush() 
+void WavSink::flush()
 {
     if (!file_ || buffer_.empty())
-    {
         return;
-    }
 
     fwrite(buffer_.data(), sizeof(int16_t), buffer_.size(), file_);
+
     totalSamplesWritten_ += buffer_.size();
     buffer_.clear();
-    patchHeaderSizes();
 }
+
+//void WavSink::flush() 
+//{
+//    if (!file_ || buffer_.empty())
+//    {
+//        return;
+//    }
+//
+//    fwrite(buffer_.data(), sizeof(int16_t), buffer_.size(), file_);
+//    totalSamplesWritten_ += buffer_.size();
+//    buffer_.clear();
+//    patchHeaderSizes();
+//}
+//

@@ -16,7 +16,7 @@ public:
 private:
     //std::unique_ptr<ToasterSubsystem> toasterSubsystem_;
     ToasterSubsystem* toasterSubsystem_;
-    Config config_; // TODO:
+    ToasterConfig config_; // TODO:
 };
 
 

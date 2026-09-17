@@ -2,7 +2,6 @@
 #include "ToasterSubsystem.h"
 #include "Receiver.h"
 #include "DspProcessor.h"
-#include "Audio.h"
 #include "AudioSink.h"
 #include "WavSink.h"
 #include "PcmSink.h"
@@ -28,9 +27,11 @@
 #include <cstring>
 
 ToasterSubsystem::ToasterSubsystem(
-    const Config& config) 
-    : 
-    config_(config)
+    const ToasterConfig &config)
+    : config_(config),
+      receiver_(),
+      console_(),
+      stopListener_(console_, [this](){ stop(); })
 {
     std::cout << "Custom Config ToasterSubsystem::ToasterSubsystem()" << std::endl;
     // TODO: can i call these in the contructor or will that 
@@ -49,20 +50,19 @@ ToasterSubsystem::~ToasterSubsystem()
     std::cout << "ToasterSubsystem::~ToasterSubsystem()" << std::endl;
     //stop();
 
-    delete dspProcessor_;
+    //delete dspProcessor_;
 
-    //delete audio_;
-    delete audioSink_;
+    //delete audioSink_;
 
-    delete decimator_;
-    delete demodulator_;
+    //delete decimator_;
+    //delete demodulator_;
 
-    delete channelFilter_;
+    //delete channelFilter_;
 
-    delete audioFilter_;
+    //delete audioFilter_;
 
-    delete dispatcher_;
-    delete receiver_;
+    //delete dispatcher_;
+    //delete receiver_;
 
 }
 
@@ -79,32 +79,42 @@ void ToasterSubsystem::setupMessaging()
     std::cout << "ToasterSubsystem::setupMessaging()" << std::endl;
     //receiver_->setOnData([this](const std::vector<std::complex<float>>& iq_samples) {});
     
-    //receiver_ = new Receiver(config_.center_freq, config_.other_stuff, etc...);
-    receiver_ = new Receiver();
-    dispatcher_ = new Dispatcher();
-    demodulator_ = new Demodulator();
-    decimator_ = new Decimator(50);
-    //audio_ = new AudioSink(config_.center_freq, config_.other_stuff, etc...);
-    audioSink_ = new WavSink();
-    //audio_ = new Audio(audioSink_);
-    //fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
-    //fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
-    //audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
+    ////receiver_ = new Receiver();
+    //dispatcher_ = new Dispatcher();
+    //demodulator_ = new Demodulator();
+    //decimator_ = new Decimator(50);
+    ////audio_ = new AudioSink(config_.center_freq, config_.other_stuff, etc...);
+    //audioSink_ = new WavSink();
+    ////audio_ = new Audio(audioSink_);
+    ////fmFilter_ = new Filter(2400000.0f, 80000.0f, 101); // old
+    ////fmFilter_ = new FIRFilter(2400000.0f, 150000.0f, 101);
+    ////audioFilter_ = new FIRFilter(2400000.0f, 15000.0f, 101);
 
-    if (config_.filterType_ == FilterType::IIR)
-    {
-        // cutoff, sample rate
-        channelFilter_ = new IIRLowPassFilter(80'000.0f, 2'400'000.0f);
-        audioFilter_ = new IIRLowPassFilter(15'000.0f, 2'400'000.0f);
-    }
-    else if (config_.filterType_ == FilterType::FIR)
-    {
-        // numTaps, cutoff, sample rate
-        channelFilter_ = new FIRLowPassFilter(101, 80'000.0f, 2'400'000.0f);
-        audioFilter_ = new FIRLowPassFilter(101, 15'000.0f, 2'400'000.0f);
-    }
+    //if (config_.channelFilterType == FilterType::IIR)
+    //{
+    //    std::cout << "Channel Filter: IIR" << std::endl;
+    //    // cutoff, sample rate
+    //    channelFilter_ = new IIRLowPassFilter(80'000.0f, 2'400'000.0f);
+    //}
+    //else if (config_.channelFilterType == FilterType::FIR)
+    //{
+    //    std::cout << "Channel Filter: FIR" << std::endl;
+    //    // numTaps, cutoff, sample rate
+    //    channelFilter_ = new FIRLowPassFilter(101, 80'000.0f, 2'400'000.0f);
+    //}
 
-    dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audioSink_);
+    //if (config_.audioFilterType == FilterType::IIR)
+    //{
+    //    std::cout << "Audio Filter: IIR" << std::endl;
+    //    audioFilter_ = new IIRLowPassFilter(15'000.0f, 2'400'000.0f);
+    //}
+    //else if (config_.audioFilterType == FilterType::FIR)
+    //{
+    //    std::cout << "Audio Filter: FIR" << std::endl;
+    //    audioFilter_ = new FIRLowPassFilter(101, 15'000.0f, 2'400'000.0f);
+    //}
+
+    //dspProcessor_ = new DspProcessor(channelFilter_, audioFilter_, demodulator_, decimator_, audioSink_);
 }
 
 
@@ -150,12 +160,11 @@ void ToasterSubsystem::setupEvents()
     //    dispatcher_->dispatch(iqData);
     //});
 
-    receiver_->setRawSampleCallback([this](const uint8_t* buf, uint32_t len) 
-    {
-        //dispatcher_->dispatch(buf, len); 
-        dspProcessor_->processBuffer(buf, len);
-    });
-    audioSink_->flush();
+    //receiver_.setRawSampleCallback([this](const uint8_t* buf, uint32_t len) 
+    //{
+    //    //dispatcher_->dispatch(buf, len); 
+    //    dspProcessor_->processBuffer(buf, len);
+    //});
 
 
     // dispatcher callbacks
@@ -180,80 +189,81 @@ void ToasterSubsystem::setupEvents()
 
 }
 
+
+// TODO: these are factories for filters and sink... move them somewhere else
+std::unique_ptr<Filter> makeChannelFilter(const ToasterConfig& config) 
+{
+    if (config.channelFilterType == FilterType::IIR) 
+    {
+        return std::make_unique<IIRLowPassFilter>(config.audioCutoffHz, config.sampleRate_);
+    }
+    return std::make_unique<FIRLowPassFilter>(config.FIRNumTaps, config.audioCutoffHz,
+                                               config.sampleRate_);
+}
+std::unique_ptr<AudioSink> makeSink(const ToasterConfig& config)
+{
+    if (config.audioSinkType_ == AudioSinkType::WAV) {
+        return std::make_unique<WavSink>(config.outputWavPath, config.audioSampleRateHz,
+                                                /*numChannels=*/1, config.outputGain);
+    }
+    return std::make_unique<PcmSink>(stdout, config.outputGain);
+}
+
 bool ToasterSubsystem::start()
 {
     // TODO: 
     // initialize default subcomponents if given no custom config
     std::cout << "ToasterSubsystem::start()" << std::endl;
-
     bool status = false;
+
+    dspProcessor_ = std::make_unique<DspProcessor>(makeChannelFilter(config_), makeSink(config_));
+
+    if (!receiver_.open())
+    {
+        std::cout << "Failed to open RTL-SDR device" << std::endl; 
+        return false;
+    }
+
+    stopListener_.start();
+
 
 
     // TODO: wait for commands - implement this later
     // For now we will just automatically start receiving
     //dspProcessor_->start(); // TODO: ? 
-    receiver_->startAsync();
-
+    //receiver_.startAsync();
+    receiver_.startAsync( [this](const uint8_t *buf, uint32_t len)
+    { 
+        dspProcessor_->processBuffer(buf, len); 
+    });
+    dspProcessor_->flush();
     // std::string command
-    std::string input;
+    //std::string input;
+    //std::cout << "right before while loop " << std::endl;
 
-    while (std::getline(std::cin, input))
-    {
-        // TODO: replace with switch/case statement
-        if (input == " ")
-        {
-            toggleRecv();
-        }
-        else if (input == "start")
-        {
+    //while (std::getline(std::cin, input))
+    //{
+    //    // TODO: replace with switch/case statement
+    //    std::cout << "getline loop..." << std::endl;
+    //    if (input == "start")
+    //    {
 
-        }
-        else if (input == "stop")
-        {
-            stop();
-            // status = ...
-            break;
-        }
-        else if (input == "pause")
-        {
-            toggleRecv();
-        }
-    }
+    //    }
+    //    else if (input == "stop")
+    //    {
+    //        //stop();
+    //        // status = ...
+    //        break;
+    //    }
+    //}
+    //std::cout << "done with while loop" << std::endl;
 
     return status;
 }
 
 void ToasterSubsystem::stop()
 {
-    //std::cout << "ToasterSubsystem::stop()" << std::endl;
-    std::cout << "STOP: entering" << std::endl;
+    receiver_.stop();
 
-    receiver_->stopAsync();
-
-    std::cout << "STOP: receiver stopped" << std::endl;
-
-    dspProcessor_->stop();
-
-    //std::cout << "STOP: DSP stopped" << std::endl;
-
-    audioSink_->flush();
-
-    //std::cout << "STOP: audio finalized" << std::endl;
-}
-
-
-// TODO: this should be handled by a dispatcher class?
-void ToasterSubsystem::toggleRecv()
-{
-    std::cout << "ToasterSubsystem::toggleRecv()" << std::endl;
-    if (receiver_->isReceiving())
-    {
-        std::cout << "\tstopAsync" << std::endl;
-        receiver_->stopAsync();
-    }
-    else
-    {
-        std::cout << "\tstartAsync" << std::endl;
-        receiver_->startAsync();
-    }
+    //audioSink_->flush();
 }

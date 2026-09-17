@@ -34,10 +34,14 @@ Audio:
 */
 int main()
 {
-	Toaster toaster;
-	toaster.createToasterSubsystem();
-	toaster.startToasterSubsystem();
+	//Toaster toaster;
+	//toaster.createToasterSubsystem();
+	//toaster.startToasterSubsystem();
 	//toaster.stopToasterSubsystem();
+	ToasterConfig config;
+	ToasterSubsystem toasterSubsystem(config);
+	toasterSubsystem.start();
+
 
 	return 0;
 }

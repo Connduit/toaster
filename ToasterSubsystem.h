@@ -2,7 +2,6 @@
 #define TOASTER_SUBSYSTEM_H
 
 #include "Config.h"
-#include "Audio.h"
 #include "DspProcessor.h"
 #include "Receiver.h"
 #include "Dispatcher.h"
@@ -11,6 +10,8 @@
 //#include "Filter.h"
 #include "FIRFilter.h"
 #include "IIRFilter.h"
+#include "Console.h"
+#include "ConsoleStopListener.h"
 
 #include <memory>
 #include <atomic>
@@ -25,7 +26,6 @@ class Receiver;
 class Dispatcher;
 class Demodulator;
 class Decimator;
-class Audio;
 class AudioSink;
 class DspProcessor;
 
@@ -43,7 +43,7 @@ class DspProcessor;
 class ToasterSubsystem
 {
 public:
-    explicit ToasterSubsystem(const Config& config);
+    explicit ToasterSubsystem(const ToasterConfig& config);
     ~ToasterSubsystem();
     
     // TODO: rename start to run?
@@ -57,25 +57,26 @@ private:
     void setupEvents();
     // void setupTasks();
 
+    ToasterConfig config_; // TODO: change to Config& config_
 
-    void toggleRecv();
+    //Receiver* receiver_;
+    Receiver receiver_;
 
-    Config config_; // TODO: change to Config& config_
+    Console console_;
+    ConsoleStopListener stopListener_;
 
-    Receiver* receiver_;
-
-    Dispatcher* dispatcher_;
+    //Dispatcher* dispatcher_;
 
     // first filter - used for reducing out-of-band signals and to prevent aliasing
-    Filter* channelFilter_;
+    //Filter* channelFilter_;
 
 
-    Filter* audioFilter_;
-    Demodulator* demodulator_;
-    Decimator* decimator_;
-    AudioSink* audioSink_; 
-    Audio* audio_;
-    DspProcessor* dspProcessor_;
+    //Filter* audioFilter_;
+    //Demodulator* demodulator_;
+    //Decimator* decimator_;
+    //AudioSink* audioSink_; 
+    //DspProcessor dspProcessor_;
+    std::unique_ptr<DspProcessor> dspProcessor_;
     //std::unique_ptr<Receiver> receiver_;
     // std::unique_ptr<DspProcessor> processor_;
     // std::unique_ptr<AudioSink> audio_sink_;
@@ -88,44 +89,4 @@ private:
     // std::string output_filename_ = "output.wav";
 };
 
-// class ToasterSubsystem
-// {
-// public:
-//     ToasterSubsystem();
-//     //ToasterSubsystem(Config& config);
-//     ~ToasterSubsystem();
-// 
-// 	// run/start listening?
-// 	bool start();
-// 	//void start();
-// 	void stop();
-// 
-// 	// void sendResult(); // TODO: it feels like the wrong place to put this function
-// 
-// 	// TODO:
-// 	// void recvMessage(); 
-// 	// void startReceiving(); ???
-// 
-// private:
-// 	void setupMessaging();
-// 	void setupEvents();
-// 	//void setupTasks();
-// 
-// 	void setupSubcomponents();
-// 	//void setupModules();
-// 
-//     //Filter* filter_;
-// 	// Receiver* receiver_;
-// 	// AudioSink* audio_;
-// 	// DspProcessor* processor_;
-// 	std::unique_ptr<Receiver> receiver_;
-//     std::unique_ptr<DspProcessor> processor_;
-//     std::unique_ptr<AudioSink> audio_sink_; // TODO: rename
-// 	//Config& config_;
-// 
-// 	bool running_ = false;
-// 
-// };
-// 
-// 
 #endif
