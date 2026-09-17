@@ -10,15 +10,18 @@
 //
 // Time constant is typically 75us (US, South Korea) or 50us (most of the
 // rest of the world, including Europe).
-class DeemphasisFilter : public Filter {
+class DeemphasisFilter : public Filter 
+{
 public:
-    DeemphasisFilter(double sampleRateHz, double tauMicroseconds) {
+    DeemphasisFilter(double sampleRateHz, double tauMicroseconds) 
+    {
         double dt = 1.0 / sampleRateHz;
         double rc = tauMicroseconds * 1e-6;
         alpha_ = static_cast<float>(dt / (rc + dt));
     }
 
-    float process(float sample) override {
+    float process(float sample) override 
+    {
         prev_ += alpha_ * (sample - prev_);
         return prev_;
     }

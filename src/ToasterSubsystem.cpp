@@ -27,28 +27,14 @@
 #include <thread>
 #include <cstring>
 
-// TODO: these are factories for filters and sink... move them somewhere else
-//std::unique_ptr<Filter> makeChannelFilter(const ToasterConfig& config) 
-//{
-//    if (config.channelFilterType == FilterType::IIR) 
-//    {
-//        return std::make_unique<IIRLowPassFilter>(config.audioCutoffHz, config.sampleRate_);
-//    }
-//    return std::make_unique<FIRLowPassFilter>(config.FIRNumTaps, config.audioCutoffHz,
-//                                               config.sampleRate_);
-//}
-
 
 ToasterSubsystem::ToasterSubsystem(
     const ToasterConfig &config)
     : config_(config),
       receiver_(),
       console_(),
-      stopListener_(console_, [this](){ stop(); })
+      stopListener_(console_, [this](){ stop(); }) // TODO: setup somewhere else? this looks sloppy
 {
-    std::cout << "Custom Config ToasterSubsystem::ToasterSubsystem()" << std::endl;
-
-    //dspProcessor_ = std::make_unique<DspProcessor>(makeChannelFilter(config_), makeSink(config_));
     dspProcessor_ = std::make_unique<DspProcessor>(
                         Factory::create(config_.filterConfig), 
                         Factory::create(config_.sinkConfig));

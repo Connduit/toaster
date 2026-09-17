@@ -17,16 +17,6 @@
 class DspProcessor
 {
 public:
-    //DspProcessor( Filter* fmFilter, Demodulator* demodulator, Decimator* decimator, Audio* audio);
-    //DspProcessor( Demodulator* demodulator, Decimator* decimator, Audio* audio);
-    //DspProcessor(
-    //    Filter* channelFilter, // TODO: should be a reference since it was created in toaster subsystem. this would also be a very good time to use a unique_ptr
-    //    Filter* audioFilter, 
-    //    Demodulator* demodulator, 
-    //    Decimator* decimator, 
-    //    AudioSink* audioSink);
-    //    //Audio* audio);
-
     DspProcessor(FilterUniquePtr channelFilter, AudioSinkUniquePtr audioSink);
 
     void processBuffer(const uint8_t* buf, uint32_t len);
@@ -36,12 +26,13 @@ public:
 
 private:
 
-    Demodulator demodulator_; // not ptr
-    FilterUniquePtr channelFilter_; // uniqueptr
-    Decimator decimator_; // no ptr
+    Demodulator demodulator_;
+    FilterUniquePtr channelFilter_;
+    Decimator decimator_;
     DeemphasisFilter deemphasis_;
-    AudioSinkUniquePtr audioSink_; // TODO: uniqueptr
+    AudioSinkUniquePtr audioSink_;
 };
 
+typedef std::unique_ptr<DspProcessor> DspProcessorUniquePtr;
 
 #endif

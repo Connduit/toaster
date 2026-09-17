@@ -9,7 +9,8 @@
 // well-defined center tap — so if you pass an even numTaps to highPass()
 // or bandStop(), it's bumped up to the next odd number internally (the
 // returned vector's length reflects this).
-namespace FIRDesign {
+namespace FIRDesign 
+{
 
 std::vector<float> lowPass(int numTaps, double cutoffHz, double sampleRateHz);
 std::vector<float> highPass(int numTaps, double cutoffHz, double sampleRateHz);

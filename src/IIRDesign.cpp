@@ -6,35 +6,41 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace {
+namespace 
+{
 
 // Shared setup every RBJ biquad formula starts from.
-struct Trig {
+struct Trig 
+{
     double cosw0;
     double alpha;
 };
 
-Trig computeTrig(double freqHz, double sampleRateHz, double q) {
+Trig computeTrig(double freqHz, double sampleRateHz, double q) 
+{
     double w0 = 2.0 * M_PI * freqHz / sampleRateHz;
     return {std::cos(w0), std::sin(w0) / (2.0 * q)};
 }
 
-IIRDesign::Coefficients normalize(double b0, double b1, double b2, double a0, double a1,
-                                   double a2) {
+IIRDesign::Coefficients normalize(double b0, double b1, double b2, double a0, double a1, double a2) 
+{
     return {static_cast<float>(b0 / a0), static_cast<float>(b1 / a0), static_cast<float>(b2 / a0),
             static_cast<float>(a1 / a0), static_cast<float>(a2 / a0)};
 }
 
 double centerFrequency(double lowHz, double highHz) { return std::sqrt(lowHz * highHz); }
-double qFromBandwidth(double lowHz, double highHz) {
+double qFromBandwidth(double lowHz, double highHz) 
+{
     return centerFrequency(lowHz, highHz) / (highHz - lowHz);
 }
 
 }  // namespace
 
-namespace IIRDesign {
+namespace IIRDesign 
+{
 
-Coefficients lowPass(double cutoffHz, double sampleRateHz, double q) {
+Coefficients lowPass(double cutoffHz, double sampleRateHz, double q) 
+{
     Trig t = computeTrig(cutoffHz, sampleRateHz, q);
     double b0 = (1.0 - t.cosw0) / 2.0;
     double b1 = 1.0 - t.cosw0;
@@ -45,7 +51,8 @@ Coefficients lowPass(double cutoffHz, double sampleRateHz, double q) {
     return normalize(b0, b1, b2, a0, a1, a2);
 }
 
-Coefficients highPass(double cutoffHz, double sampleRateHz, double q) {
+Coefficients highPass(double cutoffHz, double sampleRateHz, double q) 
+{
     Trig t = computeTrig(cutoffHz, sampleRateHz, q);
     double b0 = (1.0 + t.cosw0) / 2.0;
     double b1 = -(1.0 + t.cosw0);
@@ -56,7 +63,8 @@ Coefficients highPass(double cutoffHz, double sampleRateHz, double q) {
     return normalize(b0, b1, b2, a0, a1, a2);
 }
 
-Coefficients bandPass(double lowHz, double highHz, double sampleRateHz) {
+Coefficients bandPass(double lowHz, double highHz, double sampleRateHz) 
+{
     double center = centerFrequency(lowHz, highHz);
     double q = qFromBandwidth(lowHz, highHz);
     Trig t = computeTrig(center, sampleRateHz, q);
@@ -71,7 +79,8 @@ Coefficients bandPass(double lowHz, double highHz, double sampleRateHz) {
     return normalize(b0, b1, b2, a0, a1, a2);
 }
 
-Coefficients bandStop(double lowHz, double highHz, double sampleRateHz) {
+Coefficients bandStop(double lowHz, double highHz, double sampleRateHz) 
+{
     double center = centerFrequency(lowHz, highHz);
     double q = qFromBandwidth(lowHz, highHz);
     Trig t = computeTrig(center, sampleRateHz, q);

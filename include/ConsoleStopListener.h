@@ -21,7 +21,10 @@
 // bad state. Reading a command on an ordinary background thread calls
 // the exact same stop function, just from a normal thread instead of a
 // signal context, which is safe.
-class ConsoleStopListener : public Listener {
+
+// TODO: make corresponding .cpp file for this class
+class ConsoleStopListener : public Listener 
+{
 public:
     using StopCallback = std::function<void()>;
 
@@ -34,13 +37,15 @@ public:
     // joined since it may still be blocked waiting for a line when the
     // program is ready to exit — the OS reclaims it at process exit
     // either way.
-    void start() override {
+    void start() override 
+    {
         console_.printLine("Type 'stop' and press Enter to stop.");
         std::thread([this]() { run(); }).detach();
     }
 
 private:
-    void run() {
+    void run() 
+    {
         std::string line;
         while (console_.readLine(line)) 
         {
@@ -56,17 +61,22 @@ private:
         // Input stream closed (EOF) — treat that as a stop request too,
         // so redirecting stdin from /dev/null doesn't hang the program
         // forever with no way to end it.
-        if (onStop_) onStop_();
+        if (onStop_) 
+        {
+            onStop_();
+        }
     }
 
-    static std::string trim(const std::string& s) {
+    static std::string trim(const std::string& s) 
+    {
         size_t start = s.find_first_not_of(" \t\r\n");
         if (start == std::string::npos) return "";
         size_t end = s.find_last_not_of(" \t\r\n");
         return s.substr(start, end - start + 1);
     }
 
-    static std::string toLower(std::string s) {
+    static std::string toLower(std::string s) 
+    {
         std::transform(s.begin(), s.end(), s.begin(),
                         [](unsigned char c) { return std::tolower(c); });
         return s;

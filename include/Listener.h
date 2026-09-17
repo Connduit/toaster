@@ -6,7 +6,8 @@
 // ConsoleStopListener is the FIRst concrete example; a future listener
 // (say, one that watches a socket for remote control commands) would
 // implement this same interface.
-class Listener {
+class Listener 
+{
 public:
     virtual ~Listener() = default;
 

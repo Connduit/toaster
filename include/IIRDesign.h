@@ -2,11 +2,13 @@
 
 // Biquad (2nd-order IIR) coefficient design using the standard "Audio EQ
 // Cookbook" (RBJ) formulas.
-namespace IIRDesign {
+namespace IIRDesign 
+{
 
 // a0 has already been divided out, so these plug straight into
 // IirFilter::setCoefficients(b0, b1, b2, a1, a2).
-struct Coefficients {
+struct Coefficients 
+{
     float b0, b1, b2, a1, a2;
 };
 

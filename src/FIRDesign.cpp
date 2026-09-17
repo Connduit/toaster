@@ -6,13 +6,15 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace {
+namespace 
+{
 
 int makeOdd(int numTaps) { return (numTaps % 2 == 0) ? numTaps + 1 : numTaps; }
 
 // Core building block: a windowed-sinc low-pass, normalized to unity
 // gain at DC. Every other shape here is built from one or two of these.
-std::vector<float> windowedSincLowpass(int numTaps, double cutoffHz, double sampleRateHz) {
+std::vector<float> windowedSincLowpass(int numTaps, double cutoffHz, double sampleRateHz) 
+{
     std::vector<float> h(numTaps);
     double fc = cutoffHz / sampleRateHz;  // normalized cutoff (0..0.5)
     int m = numTaps - 1;
@@ -32,13 +34,16 @@ std::vector<float> windowedSincLowpass(int numTaps, double cutoffHz, double samp
 
 }  // namespace
 
-namespace FIRDesign {
+namespace FIRDesign 
+{
 
-std::vector<float> lowPass(int numTaps, double cutoffHz, double sampleRateHz) {
+std::vector<float> lowPass(int numTaps, double cutoffHz, double sampleRateHz) 
+{
     return windowedSincLowpass(numTaps, cutoffHz, sampleRateHz);
 }
 
-std::vector<float> highPass(int numTaps, double cutoffHz, double sampleRateHz) {
+std::vector<float> highPass(int numTaps, double cutoffHz, double sampleRateHz) 
+{
     numTaps = makeOdd(numTaps);
     std::vector<float> lp = windowedSincLowpass(numTaps, cutoffHz, sampleRateHz);
 
@@ -51,7 +56,8 @@ std::vector<float> highPass(int numTaps, double cutoffHz, double sampleRateHz) {
     return hp;
 }
 
-std::vector<float> bandPass(int numTaps, double lowHz, double highHz, double sampleRateHz) {
+std::vector<float> bandPass(int numTaps, double lowHz, double highHz, double sampleRateHz) 
+{
     // A band-pass is what's left when you take a low-pass at the high
     // edge and remove everything a low-pass at the low edge would also
     // pass — i.e. their difference.
@@ -63,7 +69,8 @@ std::vector<float> bandPass(int numTaps, double lowHz, double highHz, double sam
     return bp;
 }
 
-std::vector<float> bandStop(int numTaps, double lowHz, double highHz, double sampleRateHz) {
+std::vector<float> bandStop(int numTaps, double lowHz, double highHz, double sampleRateHz) 
+{
     numTaps = makeOdd(numTaps);
     std::vector<float> bp = bandPass(numTaps, lowHz, highHz, sampleRateHz);
 

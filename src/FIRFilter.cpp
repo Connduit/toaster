@@ -2,7 +2,8 @@
 
 #include <algorithm>
 
-void FIRFilter::setCoefficients(std::vector<float> coefficients) {
+void FIRFilter::setCoefficients(std::vector<float> coefficients) 
+{
     coeffs_ = std::move(coefficients);
     numTaps_ = static_cast<int>(coeffs_.size());
     // Double-length so every logical position has a mirror at +numTaps_,
@@ -11,8 +12,14 @@ void FIRFilter::setCoefficients(std::vector<float> coefficients) {
     historyPos_ = 0;
 }
 
-float FIRFilter::process(float sample) {
-    if (coeffs_.empty()) return sample;  // never configured; pass through
+float FIRFilter::process(float sample) 
+{
+    if (coeffs_.empty())
+    {
+
+        // TODO: call setCoffs(default coffs?)
+        return sample; // never configured; pass through
+    }
 
     // Write to both halves of the doubled buffer so that
     // history_[historyPos_ .. historyPos_ + numTaps_ - 1] is always a
@@ -28,13 +35,15 @@ float FIRFilter::process(float sample) {
     // modulo, no branching, and this loop auto-vectorizes.
     const float* window = &history_[static_cast<size_t>(historyPos_)];
     float acc = 0.0f;
-    for (int n = 0; n < numTaps_; ++n) {
+    for (int n = 0; n < numTaps_; ++n) 
+    {
         acc += window[n] * coeffs_[n];
     }
     return acc;
 }
 
-void FIRFilter::reset() {
+void FIRFilter::reset() 
+{
     std::fill(history_.begin(), history_.end(), 0.0f);
     historyPos_ = 0;
 }

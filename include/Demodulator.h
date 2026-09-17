@@ -10,9 +10,7 @@ class Demodulator
 {
 public:
     Demodulator();
-    AudioData process(const IQData& iqData);
     float process(float i, float q);
-    float processSample(const std::complex<float>& current);
 
 private:
     std::complex<float> previousIQ_{};

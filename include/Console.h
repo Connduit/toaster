@@ -11,10 +11,16 @@
 // Takes its streams by reference (defaulting to std::cin/std::cerr)
 // rather than owning them outright, so a test could point a Console at
 // a std::istringstream/std::ostringstream instead.
-class Console {
+class Console 
+{
 public:
-    explicit Console(std::istream& in = std::cin, std::ostream& out = std::cerr)
-        : in_(in), out_(out) {}
+    explicit Console(
+        std::istream& in = std::cin, 
+        std::ostream& out = std::cerr)
+        : 
+        in_(in), 
+        out_(out) 
+    {}
 
     // Blocks until a full line is read from the input stream. Returns
     // false (line left unchanged) if the stream has closed (EOF).

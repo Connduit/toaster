@@ -4,14 +4,20 @@
 #include "ToasterTypes.h"
 
 // Throws away samples
-class Decimator {
+class Decimator 
+{
 public:
     explicit Decimator(int factor) : factor_(factor) {}
 
     // Push one sample. If this call lands on a kept sample, writes it to
     // out and returns true. Otherwise returns false and out is untouched.
-    bool push(float sample, float& out) {
-        if (++counter_ < factor_) return false;
+    bool push(float sample, float& out) 
+    {
+        if (++counter_ < factor_) 
+        {
+            return false;
+        }
+
         counter_ = 0;
         out = sample;
         return true;
