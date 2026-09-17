@@ -1,14 +1,10 @@
 #include "Toaster.h"
 
 
-Toaster::Toaster() : config_() 
-{
-}
-//Toaster::Toaster() : toasterSubsystem_(std::make_unique<ToasterSubsystem>()),
-    //toasterSubsystem_(nullptr),
-    //config_()
-//{
-//}
+Toaster::Toaster() : config_() {}
+
+// TODO: 
+// Toaster::Toaster(ToasterConfig config) : config_(config) {}
 
 Toaster::~Toaster()
 {
@@ -16,7 +12,6 @@ Toaster::~Toaster()
     {
         delete toasterSubsystem_;
     }
-
 }
 
 void Toaster::createToasterSubsystem()
@@ -31,6 +26,5 @@ void Toaster::startToasterSubsystem()
         toasterSubsystem_->start();
     }
 }
-
 
 // void Toaster::loadConfig() {}
