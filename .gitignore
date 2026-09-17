@@ -72,6 +72,8 @@ Debug/
 # Targets
 bin/
 obj/
+build/
+
 
 # Doxygen
 Doxyfile
