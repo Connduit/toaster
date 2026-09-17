@@ -10,13 +10,11 @@ public:
     Toaster(); 
     ~Toaster();
     void createToasterSubsystem();
-    // void initToasterSubsystem(); wrapper function to explicitly call rtlsdr_read_async?
     void startToasterSubsystem();
-    void stopToasterSubsystem();
 private:
     //std::unique_ptr<ToasterSubsystem> toasterSubsystem_;
     ToasterSubsystem* toasterSubsystem_;
-    ToasterConfig config_; // TODO:
+    ToasterConfig config_;
 };
 
 

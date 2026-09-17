@@ -5,3 +5,4 @@
 - refactor EVERYTHING
 - remove std::cout
 - filters need to be optimized so badly (especially FIR)
+- break up subcomponents into their own libs that can be compiled
