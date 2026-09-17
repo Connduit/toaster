@@ -38,14 +38,6 @@
 //                                               config.sampleRate_);
 //}
 
-std::unique_ptr<AudioSink> makeSink(const ToasterConfig& config)
-{
-    if (config.audioSinkType_ == AudioSinkType::WAV) {
-        return std::make_unique<WavSink>(config.outputWavPath, config.audioSampleRateHz,
-                                                /*numChannels=*/1, config.outputGain);
-    }
-    return std::make_unique<PcmSink>(stdout, config.outputGain);
-}
 
 ToasterSubsystem::ToasterSubsystem(
     const ToasterConfig &config)

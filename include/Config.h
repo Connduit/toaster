@@ -54,19 +54,8 @@ typedef struct ToasterConfig
     uint32_t audioSampleRateHz = 48000;
     double deemphasisMicroseconds = 75.0;
 
-    // Anti-aliasing filter (applied to the demodulated signal, before
-    // decimation)
-    FilterImplType channelFilterImplType = FilterImplType::FIR;
-    FilterType channelFilterType = FilterType::LOWPASS;
-    int FIRNumTaps = 50;
     double audioCutoffHz = 15000.0;
 
-    FilterImplType audioFilterImplType = FilterImplType::IIR;
-    FilterType audioFilterType = FilterType::LOWPASS;
-
-    AudioSinkType audioSinkType_ = AudioSinkType::WAV;
-    std::string outputWavPath = "output.wav";
-    float outputGain = 12000.0f;
 
 } ToasterConfig;
 
