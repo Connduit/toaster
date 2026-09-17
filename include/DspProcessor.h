@@ -2,7 +2,7 @@
 #define TOASTER_DSP_H
 
 #include "ToasterTypes.h"
-#include "IIRFilter.h"
+#include "Filter.h"
 #include "AudioSink.h"
 #include "Deemphasis.h"
 #include "Demodulator.h"
@@ -27,7 +27,7 @@ public:
     //    AudioSink* audioSink);
     //    //Audio* audio);
 
-    DspProcessor(std::unique_ptr<Filter> channelFilter, std::unique_ptr<AudioSink> audioSink);
+    DspProcessor(FilterUniquePtr channelFilter, AudioSinkUniquePtr audioSink);
 
     void processBuffer(const uint8_t* buf, uint32_t len);
 
@@ -37,10 +37,10 @@ public:
 private:
 
     Demodulator demodulator_; // not ptr
-    std::unique_ptr<Filter> channelFilter_; // uniqueptr
+    FilterUniquePtr channelFilter_; // uniqueptr
     Decimator decimator_; // no ptr
     DeemphasisFilter deemphasis_;
-    std::unique_ptr<AudioSink> audioSink_; // TODO: uniqueptr
+    AudioSinkUniquePtr audioSink_; // TODO: uniqueptr
 };
 
 

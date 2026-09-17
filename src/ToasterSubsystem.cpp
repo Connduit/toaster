@@ -20,11 +20,32 @@
 #include "IIRHighPassFilter.h"
 #include "IIRLowPassFilter.h"
 //
+#include "Factory.h"
 #include <iostream>
 #include <csignal>
 #include <chrono>
 #include <thread>
 #include <cstring>
+
+// TODO: these are factories for filters and sink... move them somewhere else
+//std::unique_ptr<Filter> makeChannelFilter(const ToasterConfig& config) 
+//{
+//    if (config.channelFilterType == FilterType::IIR) 
+//    {
+//        return std::make_unique<IIRLowPassFilter>(config.audioCutoffHz, config.sampleRate_);
+//    }
+//    return std::make_unique<FIRLowPassFilter>(config.FIRNumTaps, config.audioCutoffHz,
+//                                               config.sampleRate_);
+//}
+
+std::unique_ptr<AudioSink> makeSink(const ToasterConfig& config)
+{
+    if (config.audioSinkType_ == AudioSinkType::WAV) {
+        return std::make_unique<WavSink>(config.outputWavPath, config.audioSampleRateHz,
+                                                /*numChannels=*/1, config.outputGain);
+    }
+    return std::make_unique<PcmSink>(stdout, config.outputGain);
+}
 
 ToasterSubsystem::ToasterSubsystem(
     const ToasterConfig &config)
@@ -34,6 +55,11 @@ ToasterSubsystem::ToasterSubsystem(
       stopListener_(console_, [this](){ stop(); })
 {
     std::cout << "Custom Config ToasterSubsystem::ToasterSubsystem()" << std::endl;
+
+    //dspProcessor_ = std::make_unique<DspProcessor>(makeChannelFilter(config_), makeSink(config_));
+    dspProcessor_ = std::make_unique<DspProcessor>(
+                        Factory::create(config_.filterConfig), 
+                        Factory::create(config_.sinkConfig));
     // TODO: can i call these in the contructor or will that 
     // mess with the async callback? 
     setupSubcomponents();
@@ -190,24 +216,6 @@ void ToasterSubsystem::setupEvents()
 }
 
 
-// TODO: these are factories for filters and sink... move them somewhere else
-std::unique_ptr<Filter> makeChannelFilter(const ToasterConfig& config) 
-{
-    if (config.channelFilterType == FilterType::IIR) 
-    {
-        return std::make_unique<IIRLowPassFilter>(config.audioCutoffHz, config.sampleRate_);
-    }
-    return std::make_unique<FIRLowPassFilter>(config.FIRNumTaps, config.audioCutoffHz,
-                                               config.sampleRate_);
-}
-std::unique_ptr<AudioSink> makeSink(const ToasterConfig& config)
-{
-    if (config.audioSinkType_ == AudioSinkType::WAV) {
-        return std::make_unique<WavSink>(config.outputWavPath, config.audioSampleRateHz,
-                                                /*numChannels=*/1, config.outputGain);
-    }
-    return std::make_unique<PcmSink>(stdout, config.outputGain);
-}
 
 bool ToasterSubsystem::start()
 {
@@ -216,7 +224,6 @@ bool ToasterSubsystem::start()
     std::cout << "ToasterSubsystem::start()" << std::endl;
     bool status = false;
 
-    dspProcessor_ = std::make_unique<DspProcessor>(makeChannelFilter(config_), makeSink(config_));
 
     if (!receiver_.open())
     {

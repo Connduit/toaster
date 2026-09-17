@@ -29,6 +29,7 @@ add_library(toaster_lib
     src/IIRFilter.cpp
     src/RtlSdrDevice.cpp
     src/ToasterSubsystem.cpp
+    src/Factory.cpp
 )
 
 target_include_directories(toaster_lib

@@ -7,7 +7,7 @@
 class FIRLowPassFilter : public FIRFilter 
 {
 public:
-    FIRLowPassFilter(int numTaps, double cutoffHz, double sampleRateHz) 
+    FIRLowPassFilter(int numTaps, double cutoffHz, double sampleRateHz)  // TODO: numTaps should be last param so i can give it default value
     {
         setCoefficients(FIRDesign::lowPass(numTaps, cutoffHz, sampleRateHz));
     }

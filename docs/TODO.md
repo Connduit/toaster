@@ -6,3 +6,7 @@
 - remove std::cout
 - filters need to be optimized so badly (especially FIR)
 - break up subcomponents into their own libs that can be compiled
+- organize public and private includes (put them in include if public but src if private)
+- make a "Sample" class that can represent samples as float i and float q or complex<float> and do all the necessary arithmetic operations for samples
+- move FIR and IIR design into FIRFilter.h and IIRFilter.h respectively
+- make a config parser class (maybe converts json config file into config class?)

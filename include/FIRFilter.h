@@ -25,7 +25,8 @@
 //
 // Not meant to be instantiated directly: use one of the FirLowPassFilter
 // / FirHighPassFilter / FirBandPassFilter / FirBandStopFilter subclasses.
-class FIRFilter : public Filter {
+class FIRFilter : public Filter 
+{
 public:
     float process(float sample) override;
     void reset() override;

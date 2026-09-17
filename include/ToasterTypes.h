@@ -4,10 +4,19 @@
 #include <complex>
 #include <vector>
 
-enum class FilterType
+enum class FilterImplType
 {
     IIR,
     FIR
+};
+
+enum class FilterType
+{
+    LOWPASS,
+    HIGHPASS,
+    BANDPASS,
+    BANDSTOP
+    // NOTCH
 };
 
 enum class AudioSinkType

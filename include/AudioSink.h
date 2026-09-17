@@ -3,6 +3,7 @@
 
 #include "ToasterTypes.h"
 
+#include <memory>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -20,5 +21,7 @@ public:
     // Flush/finalize anything buffered. Safe to call multiple times.
     virtual void flush() = 0;
 };
+
+typedef std::unique_ptr<AudioSink> AudioSinkUniquePtr;
 
 #endif

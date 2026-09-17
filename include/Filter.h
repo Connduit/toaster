@@ -2,6 +2,7 @@
 #define TOASTER_FILTER_H
 
 #include "ToasterTypes.h"
+#include <memory> // TODO: is it correct to this class and all subclasses this include just so i can typedef FilterUniquePtr ?  
 
 // TODO: put all filters in a "namespace Filter" ? 
 
@@ -16,6 +17,8 @@ public:
 
 private:
 };
+
+typedef std::unique_ptr<Filter> FilterUniquePtr;
 
 // // FIR (finite impulse response)
 // // IIR (infinite impulse response)
